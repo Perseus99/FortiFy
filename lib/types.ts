@@ -30,6 +30,8 @@ export type WeeklyGoal = {
   actual_spent: number
   score: number
   completed: boolean
+  goal_category: string | null
+  goal_label: string | null
   created_at: string
 }
 

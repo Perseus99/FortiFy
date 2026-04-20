@@ -53,10 +53,22 @@ export async function POST(req: NextRequest) {
 
     // Only open a new goal row when the calendar week has turned
     if (isNewWeek) {
+      // Pick the top spending category and set a targeted reduction goal
+      const cats = financialProfile.categories
+      const categoryLabels: Record<string, string> = {
+        food: 'food', subscriptions: 'subscriptions', shopping: 'shopping',
+        transport: 'transport', entertainment: 'entertainment', utilities: 'utilities', other: 'other spending',
+      }
+      const [topCat, topAmt] = Object.entries(cats).sort(([, a], [, b]) => b - a)[0] ?? ['other', 0]
+      const targetAmt = Math.round(topAmt * 0.8)
+      const newGoalLabel = `Reduce ${categoryLabels[topCat] ?? topCat} spend from $${Math.round(topAmt)} → $${targetAmt}`
+
       await db.from('weekly_goals').insert({
         user_id: userId,
         week_start_date: todayStr,
-        goal_amount: goalAmount,
+        goal_amount: targetAmt,
+        goal_category: topCat,
+        goal_label: newGoalLabel,
         actual_spent: 0,
         score: 0,
         completed: false,

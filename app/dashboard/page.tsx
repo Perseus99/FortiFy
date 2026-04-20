@@ -116,8 +116,12 @@ export default function DashboardPage() {
     </div>
   )
 
-  const spentPct       = goal ? Math.min(100, (goal.actual_spent / goal.goal_amount) * 100) : 0
-  const overBudget     = goal ? goal.actual_spent > goal.goal_amount : false
+  // For targeted goals, track spend in the specific category; fallback to total
+  const categorySpend = (goal?.goal_category && transactions.length > 0)
+    ? transactions.filter(t => t.category === goal.goal_category).reduce((s, t) => s + Number(t.amount), 0)
+    : goal?.actual_spent ?? 0
+  const spentPct   = goal ? Math.min(100, (categorySpend / goal.goal_amount) * 100) : 0
+  const overBudget = goal ? categorySpend > goal.goal_amount : false
   const hasSubscriptions = transactions.some(t => t.category === 'subscriptions')
   const hasFlagged     = transactions.some(t => t.flagged)
 
@@ -235,20 +239,27 @@ export default function DashboardPage() {
         {/* Weekly goal */}
         {goal && (
           <div className="bg-gray-900 rounded-lg p-5 border border-gray-800">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-white font-semibold">This Week's Budget</h2>
-              <span className="text-sm text-gray-400">Goal: ${goal.goal_amount}</span>
+            <div className="flex justify-between items-center mb-1">
+              <h2 className="text-white font-semibold">This Week's Goal</h2>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${overBudget ? 'bg-red-900/50 text-red-400' : 'bg-green-900/50 text-green-400'}`}>
+                {overBudget ? 'Over target' : 'On track'}
+              </span>
             </div>
+            {goal.goal_label && (
+              <p className="text-amber-400 text-sm mb-3">{goal.goal_label}</p>
+            )}
             <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
               <div
-                className={`h-3 rounded-full transition-all ${spentPct > 90 ? 'bg-red-500' : spentPct > 70 ? 'bg-amber-500' : 'bg-green-500'}`}
-                style={{ width: `${spentPct}%` }}
+                className={`h-3 rounded-full transition-all ${spentPct > 100 ? 'bg-red-500' : spentPct > 80 ? 'bg-amber-500' : 'bg-green-500'}`}
+                style={{ width: `${Math.min(spentPct, 100)}%` }}
               />
             </div>
             <div className="flex justify-between text-sm text-gray-400">
-              <span>Spent: ${goal.actual_spent.toFixed(2)}</span>
-              <span className={spentPct > 100 ? 'text-red-400' : 'text-gray-400'}>
-                {spentPct > 100 ? `$${(goal.actual_spent - goal.goal_amount).toFixed(2)} over` : `$${(goal.goal_amount - goal.actual_spent).toFixed(2)} remaining`}
+              <span>Spent: ${categorySpend.toFixed(0)}</span>
+              <span className={overBudget ? 'text-red-400' : 'text-gray-400'}>
+                {overBudget
+                  ? `$${(categorySpend - goal.goal_amount).toFixed(0)} over target`
+                  : `$${(goal.goal_amount - categorySpend).toFixed(0)} left to hit goal`}
               </span>
             </div>
           </div>
