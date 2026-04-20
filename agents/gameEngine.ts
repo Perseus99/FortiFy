@@ -8,7 +8,11 @@ function scoreToWaveParams(score: number) {
 }
 
 export async function runGameEngineAgent(
-  userId: string, score: number, weekNumber: number, token: string
+  userId: string,
+  score: number,
+  weekNumber: number,
+  token: string,
+  goalBonus: { points: number; health: number } = { points: 0, health: 0 }
 ): Promise<WaveConfig> {
   const db = createAuthClient(token)
   const params = scoreToWaveParams(score)
@@ -24,8 +28,8 @@ export async function runGameEngineAgent(
 
   if (error) throw new Error(`Game engine agent failed: ${error.message}`)
 
-  const pointsEarned    = Math.floor(score * 1.5)
-  const cityHealthBonus = score >= 80 ? 10 : score >= 50 ? 0 : -15
+  const pointsEarned    = Math.floor(score * 1.5) + goalBonus.points
+  const cityHealthBonus = (score >= 80 ? 10 : score >= 50 ? 0 : -15) + goalBonus.health
 
   await db.rpc('update_game_state', {
     p_user_id:      userId,

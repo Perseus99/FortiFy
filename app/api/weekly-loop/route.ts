@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No Nessie account. Run /api/seed first.' }, { status: 400 })
 
     const { data: goal } = await db.from('weekly_goals')
-      .select('goal_amount, week_start_date, completed')
+      .select('goal_amount, goal_category, week_start_date, completed')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -60,6 +60,39 @@ export async function POST(req: NextRequest) {
       if (t.category) catTotals[t.category] = (catTotals[t.category] ?? 0) + Number(t.amount)
     })
 
+    // Goal completion check: did they hit last week's category target?
+    let goalPointsDelta = 0
+    let goalHealthDelta = 0
+    let goalAchieved = false
+    if (goal?.goal_category && goal?.goal_amount) {
+      const categorySpend = catTotals[goal.goal_category] ?? 0
+      const missRatio = categorySpend / goal.goal_amount  // <1 = under target (good), >1 = over
+
+      if (missRatio <= 1.0) {
+        // Hit the goal — bonus scales with how much under they came in
+        goalAchieved = true
+        goalPointsDelta = missRatio <= 0.8 ? 75 : 50   // crushed it vs just made it
+        goalHealthDelta = missRatio <= 0.8 ? 10 : 5
+      } else if (missRatio <= 1.2) {
+        // Close miss (within 20%) — no reward, no penalty
+        goalPointsDelta = 0
+        goalHealthDelta = 0
+      } else {
+        // Significant miss — penalize
+        goalPointsDelta = 0
+        goalHealthDelta = missRatio >= 1.5 ? -20 : -10
+      }
+
+      // Update closed goal with actual category spend
+      await db.from('weekly_goals')
+        .update({ actual_spent: categorySpend })
+        .eq('user_id', userId)
+        .eq('completed', true)
+        .eq('goal_category', goal.goal_category)
+        .order('created_at', { ascending: false })
+        .limit(1)
+    }
+
     // Load user's dismissed category preferences
     const { data: prefs } = await db.from('category_preferences')
       .select('category')
@@ -91,9 +124,12 @@ export async function POST(req: NextRequest) {
       completed: false,
     })
 
-    const waveConfig = await runGameEngineAgent(userId, financialProfile.score, nextWeek, token)
+    const waveConfig = await runGameEngineAgent(
+      userId, financialProfile.score, nextWeek, token,
+      { points: goalPointsDelta, health: goalHealthDelta }
+    )
 
-    return NextResponse.json({ financialProfile, waveConfig })
+    return NextResponse.json({ financialProfile, waveConfig, goalAchieved, goalPointsDelta, goalHealthDelta })
   } catch (err: any) {
     console.error('[weekly-loop]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

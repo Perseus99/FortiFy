@@ -97,7 +97,14 @@ export default function DashboardPage() {
       body: JSON.stringify({ userId }),
     })
     if (res.ok) {
-      setSyncMsg('Sync complete! Reloading...')
+      const data = await res.json()
+      if (data.goalAchieved) {
+        setSyncMsg(`Goal achieved! +${data.goalPointsDelta} pts +${data.goalHealthDelta} HP. Reloading...`)
+      } else if (data.goalHealthDelta < 0) {
+        setSyncMsg(`Goal missed. ${data.goalHealthDelta} HP penalty. Reloading...`)
+      } else {
+        setSyncMsg('Sync complete! Reloading...')
+      }
       setTimeout(() => window.location.reload(), 3000)
     } else {
       const err = await res.json()
