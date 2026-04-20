@@ -103,7 +103,7 @@ export async function runAnalystAgent(
   await db.from('transactions').delete().eq('user_id', userId)
   await db.from('transactions').insert(transactionRows)
   await db.from('weekly_goals')
-    .update({ actual_spent: totalSpent, score })
+    .update({ actual_spent: totalSpent, score, completed: true })
     .eq('user_id', userId)
     .eq('completed', false)
 

@@ -41,7 +41,19 @@ export async function POST(req: NextRequest) {
       .single()
 
     const weekNumber = gameState?.week_number ?? 1
-    const waveConfig = await runGameEngineAgent(userId, financialProfile.score, weekNumber, token)
+    const nextWeek = weekNumber + 1
+
+    // Open a fresh goal for the coming week
+    await db.from('weekly_goals').insert({
+      user_id: userId,
+      week_start_date: new Date().toISOString().split('T')[0],
+      goal_amount: goalAmount,
+      actual_spent: 0,
+      score: 0,
+      completed: false,
+    })
+
+    const waveConfig = await runGameEngineAgent(userId, financialProfile.score, nextWeek, token)
 
     return NextResponse.json({ financialProfile, waveConfig })
   } catch (err: any) {
