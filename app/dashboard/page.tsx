@@ -338,7 +338,9 @@ export default function DashboardPage() {
             {/* Label + tracking since */}
             {goal.goal_label && <p className="text-amber-400 text-sm">{goal.goal_label}</p>}
             {trackingSince && (
-              <p className="text-gray-600 text-xs">Tracking since {trackingSince} · Day {trackingDays} of 7</p>
+              <p className="text-gray-600 text-xs">
+                Tracking since {trackingSince}{trackingDays ? ` · Day ${trackingDays} of 7` : ''}
+              </p>
             )}
 
             {/* Progress bar with projected marker */}
