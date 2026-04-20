@@ -45,6 +45,34 @@ const TOWERS = {
   cannon: { name: 'Cannon', cost: 120, damage: 60, range: 2.0, fireRate: 2400, color: 0x3b82f6 },
 }
 
+// ── Enemy definitions ────────────────────────────────────────
+type EnemyType = 'foodie' | 'impulse' | 'subscription' | 'nightowl' | 'debt'
+
+const ENEMY_DEFS: Record<EnemyType, { emoji: string; label: string; hpMult: number; speedMult: number; cityDmg: number; scale: number; hpColor: number }> = {
+  foodie:       { emoji: '🍔', label: 'Foodie',             hpMult: 0.8, speedMult: 1.0, cityDmg: 15, scale: 1.0,  hpColor: 0x22c55e },
+  impulse:      { emoji: '🛍️', label: 'Impulse Buyer',      hpMult: 0.6, speedMult: 1.5, cityDmg: 10, scale: 0.85, hpColor: 0xf59e0b },
+  subscription: { emoji: '📱', label: 'Subscription Creep', hpMult: 1.8, speedMult: 0.6, cityDmg: 25, scale: 1.15, hpColor: 0xa855f7 },
+  nightowl:     { emoji: '🎬', label: 'Night Owl',           hpMult: 1.0, speedMult: 1.2, cityDmg: 15, scale: 1.0,  hpColor: 0x38bdf8 },
+  debt:         { emoji: '💳', label: 'Debt Collector',      hpMult: 2.5, speedMult: 0.8, cityDmg: 35, scale: 1.35, hpColor: 0xef4444 },
+}
+
+function buildSpawnQueue(enemyCount: number): EnemyType[] {
+  let pool: EnemyType[]
+  if (enemyCount <= 8) {
+    pool = [...Array(5).fill('foodie'), ...Array(3).fill('subscription')] as EnemyType[]
+  } else if (enemyCount <= 14) {
+    pool = [...Array(6).fill('foodie'), ...Array(4).fill('impulse'), ...Array(2).fill('subscription'), ...Array(2).fill('nightowl')] as EnemyType[]
+  } else {
+    pool = [...Array(5).fill('foodie'), ...Array(4).fill('impulse'), ...Array(4).fill('subscription'), ...Array(4).fill('nightowl'), ...Array(3).fill('debt')] as EnemyType[]
+  }
+  // Fisher-Yates shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]]
+  }
+  return pool
+}
+
 // ── Types ────────────────────────────────────────────────────
 export interface GameInitData {
   points: number
@@ -64,6 +92,8 @@ interface EnemyObj {
   maxHp: number
   wpIdx: number
   alive: boolean
+  cityDmg: number
+  speedMult: number
 }
 
 interface TowerObj {
@@ -88,6 +118,8 @@ export class GameScene extends Phaser.Scene {
   private spawned = 0
   private resolved = 0
   private over = false
+  private spawnQueue: EnemyType[] = []
+  private spawnIdx = 0
 
   private ptText!: Phaser.GameObjects.Text
   private hpText!: Phaser.GameObjects.Text
@@ -366,6 +398,8 @@ export class GameScene extends Phaser.Scene {
         duration: 900, delay: 400, ease: 'Power2',
         onComplete: () => go.destroy(),
       })
+      this.spawnQueue = buildSpawnQueue(this.waveConfig.enemy_count)
+      this.spawnIdx = 0
       const delay = (1 / this.waveConfig.spawn_rate) * 1000
       this.time.addEvent({ delay, repeat: this.waveConfig.enemy_count - 1, callback: this.spawnEnemy, callbackScope: this })
       return
@@ -387,8 +421,10 @@ export class GameScene extends Phaser.Scene {
     this.spawned++
     this.updateHUD()
 
-    const body = this.add.text(0, 2, '💸', { fontSize: '26px' }).setOrigin(0.5)
-    // Bobbing animation
+    const def = ENEMY_DEFS[this.spawnQueue[this.spawnIdx++ % this.spawnQueue.length] ?? 'foodie']
+    const hp = Math.round(this.waveConfig.enemy_hp * def.hpMult)
+
+    const body = this.add.text(0, 2, def.emoji, { fontSize: '26px' }).setOrigin(0.5)
     this.tweens.add({ targets: body, y: -3, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
 
     const hpBg = this.add.graphics()
@@ -396,16 +432,23 @@ export class GameScene extends Phaser.Scene {
     hpBg.lineStyle(1, 0x374151, 1).strokeRoundedRect(-18, -30, 36, 7, 3)
 
     const hpFill = this.add.graphics()
-    hpFill.fillStyle(0x22c55e, 1).fillRoundedRect(-18, -30, 36, 7, 3)
+    hpFill.fillStyle(def.hpColor, 1).fillRoundedRect(-18, -30, 36, 7, 3)
 
-    const container = this.add.container(cx(WAYPOINTS[0].col), cy(WAYPOINTS[0].row), [body, hpBg, hpFill]).setDepth(4)
-    container.setScale(0)
-    this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 220, ease: 'Back.easeOut' })
+    const container = this.add.container(cx(WAYPOINTS[0].col), cy(WAYPOINTS[0].row), [body, hpBg, hpFill])
+      .setDepth(4).setScale(0)
+    this.tweens.add({ targets: container, scaleX: def.scale, scaleY: def.scale, duration: 220, ease: 'Back.easeOut' })
+
+    // Name label pop
+    const label = this.add.text(cx(WAYPOINTS[0].col), cy(WAYPOINTS[0].row) - 36, def.label, {
+      fontSize: '10px', color: '#ffffff', stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(5).setAlpha(0)
+    this.tweens.add({ targets: label, alpha: 1, y: cy(WAYPOINTS[0].row) - 44, duration: 300,
+      onComplete: () => this.tweens.add({ targets: label, alpha: 0, duration: 600, delay: 500, onComplete: () => label.destroy() }) })
 
     const enemy: EnemyObj = {
-      container, hpFill,
-      hp: this.waveConfig.enemy_hp, maxHp: this.waveConfig.enemy_hp,
+      container, hpFill, hp, maxHp: hp,
       wpIdx: 1, alive: true,
+      cityDmg: def.cityDmg, speedMult: def.speedMult,
     }
     this.enemies.push(enemy)
     this.moveEnemy(enemy)
@@ -417,7 +460,7 @@ export class GameScene extends Phaser.Scene {
     const wp = WAYPOINTS[enemy.wpIdx]
     const tx = cx(wp.col), ty = cy(wp.row)
     const dist = Phaser.Math.Distance.Between(enemy.container.x, enemy.container.y, tx, ty)
-    const duration = (dist / (CELL * this.waveConfig.enemy_speed)) * 1000
+    const duration = (dist / (CELL * this.waveConfig.enemy_speed * enemy.speedMult)) * 1000
     this.tweens.add({
       targets: enemy.container, x: tx, y: ty, duration, ease: 'Linear',
       onComplete: () => { if (!enemy.alive) return; enemy.wpIdx++; this.moveEnemy(enemy) },
@@ -429,7 +472,7 @@ export class GameScene extends Phaser.Scene {
     enemy.alive = false
     this.cameras.main.shake(180, 0.012)
     enemy.container.destroy()
-    this.cityHealth = Math.max(0, this.cityHealth - 20)
+    this.cityHealth = Math.max(0, this.cityHealth - enemy.cityDmg)
     this.resolved++
     this.updateHUD()
     if (this.cityHealth <= 0) { this.endGame(false); return }
