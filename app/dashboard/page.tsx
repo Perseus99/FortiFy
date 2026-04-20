@@ -30,18 +30,17 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: profile }, { data: gs }, { data: wg }, { data: txns }, { data: weeks }] = await Promise.all([
-        supabase.from('profiles').select('nessie_account_id').eq('id', user.id).single(),
+      const [{ data: gs }, { data: wg }, { data: txns }, { data: weeks }] = await Promise.all([
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
         supabase.from('transactions').select('*').eq('user_id', user.id)
-          .order('transaction_date', { ascending: false }).limit(20),
+          .order('transaction_date', { ascending: false }).limit(100),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id)
           .order('week_start_date', { ascending: false }).limit(4),
       ])
 
-      if (!profile?.nessie_account_id) setNeedsSetup(true)
+      if (!txns || txns.length === 0) setNeedsSetup(true)
       if (gs) { setGameState(gs); setSelectedWeek(gs.week_number) }
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
@@ -75,7 +74,7 @@ export default function DashboardPage() {
     const res = await fetch('/api/seed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ userId, firstName: 'Player', lastName: 'One' }),
+      body: JSON.stringify({ userId }),
     })
     if (res.ok) {
       setSyncMsg('Running financial analysis (this takes ~30s)...')
@@ -155,14 +154,26 @@ export default function DashboardPage() {
     </div>
   )
 
+  // Cumulative week filter: Week 1 = oldest 7 days, Week 2 = oldest 14 days, etc.
+  const weeksOldestFirst = [...allWeeks].reverse()
+  const filteredTransactions = (selectedWeek && weeksOldestFirst.length > 0)
+    ? transactions.filter(t => {
+        if (!t.transaction_date) return true
+        const oldest = weeksOldestFirst[0].week_start_date
+        const nextWeekEntry = weeksOldestFirst[selectedWeek]  // undefined for last pill → no upper bound
+        return t.transaction_date >= oldest &&
+               (!nextWeekEntry || t.transaction_date < nextWeekEntry.week_start_date)
+      })
+    : transactions
+
   // For targeted goals, track spend in the specific category; fallback to total
-  const categorySpend = (goal?.goal_category && transactions.length > 0)
-    ? transactions.filter(t => t.category === goal.goal_category).reduce((s, t) => s + Number(t.amount), 0)
+  const categorySpend = (goal?.goal_category && filteredTransactions.length > 0)
+    ? filteredTransactions.filter(t => t.category === goal.goal_category).reduce((s, t) => s + Number(t.amount), 0)
     : goal?.actual_spent ?? 0
   const spentPct   = goal ? Math.min(100, (categorySpend / goal.goal_amount) * 100) : 0
   const overBudget = goal ? categorySpend > goal.goal_amount : false
-  const hasSubscriptions = transactions.some(t => t.category === 'subscriptions')
-  const hasFlagged     = transactions.some(t => t.flagged)
+  const hasSubscriptions = filteredTransactions.some(t => t.category === 'subscriptions')
+  const hasFlagged     = filteredTransactions.some(t => t.flagged)
 
   // Midweek projection
   const weekStart    = goal?.week_start_date ? new Date(goal.week_start_date) : null
@@ -175,7 +186,7 @@ export default function DashboardPage() {
   const trackingSince  = weekStart ? weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null
 
   // Which reward tier is the projection currently heading for?
-  const projRatio   = goal ? projectedSpend / goal.goal_amount : 1
+  const projRatio     = goal ? projectedSpend / goal.goal_amount : 1
   const incentiveTier = projRatio <= 0.8 ? 'crush' : projRatio <= 1.0 ? 'hit' : projRatio <= 1.2 ? 'close' : projRatio < 1.5 ? 'miss' : 'bad'
 
   return (
@@ -424,9 +435,9 @@ export default function DashboardPage() {
         )}
 
         {/* Spending category breakdown */}
-        {transactions.length > 0 && (() => {
+        {filteredTransactions.length > 0 && (() => {
           const cats: Record<string, number> = {}
-          transactions.forEach(t => { if (t.category) cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
+          filteredTransactions.forEach(t => { if (t.category) cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
           const sorted = Object.entries(cats).sort(([,a],[,b]) => b - a).slice(0, 5)
           const max = sorted[0]?.[1] ?? 1
           const icons: Record<string, string> = { food:'🍔', subscriptions:'📱', shopping:'🛍️', transport:'🚗', entertainment:'🎬', utilities:'⚡', other:'📦' }
@@ -468,13 +479,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Transactions */}
-        {transactions.length > 0 && (
+        {filteredTransactions.length > 0 && (
           <div className="bg-gray-900 rounded-lg border border-gray-800">
-            <div className="p-4 border-b border-gray-800">
-              <h2 className="text-white font-semibold">Recent Transactions</h2>
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center">
+              <h2 className="text-white font-semibold">Transactions</h2>
+              <span className="text-gray-500 text-xs">{filteredTransactions.length} shown</span>
             </div>
             <div className="divide-y divide-gray-800">
-              {transactions.map(txn => (
+              {filteredTransactions.map(txn => (
                 <div key={txn.id} className="px-4 py-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     {txn.flagged && (

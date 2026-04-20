@@ -24,13 +24,11 @@ export async function POST(req: NextRequest) {
 
     const db = createAuthClient(token)
 
-    const { data: profile } = await db.from('profiles')
-      .select('nessie_account_id')
-      .eq('id', userId)
-      .single()
-
-    if (!profile?.nessie_account_id)
-      return NextResponse.json({ error: 'No Nessie account. Run /api/seed first.' }, { status: 400 })
+    const { count } = await db.from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (!count || count === 0)
+      return NextResponse.json({ error: 'No data found. Run setup first.' }, { status: 400 })
 
     const { data: goal } = await db.from('weekly_goals')
       .select('goal_amount, goal_category, week_start_date, completed')
@@ -47,8 +45,8 @@ export async function POST(req: NextRequest) {
     // A new week has turned if the current ISO Monday differs from the last goal's week_start_date
     const calendarWeekTurned = !goal || goal.week_start_date !== weekStartStr
 
-    // Run analyst — always marks current incomplete goal as completed
-    const financialProfile = await runAnalystAgent(userId, profile.nessie_account_id, goalAmount, token)
+    // Run analyst — reads transactions from Supabase, marks current goal as completed
+    const financialProfile = await runAnalystAgent(userId, goalAmount, token)
 
     const { data: gameState } = await db.from('game_state')
       .select('week_number')

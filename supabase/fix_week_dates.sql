@@ -7,7 +7,7 @@ WITH ranked AS (
     id,
     user_id,
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at ASC)  AS rn,
-    COUNT(*)       OVER (PARTITION BY user_id)                         AS total
+    COUNT(*)      OVER (PARTITION BY user_id)                          AS total
   FROM weekly_goals
 )
 UPDATE weekly_goals wg

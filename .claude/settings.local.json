@@ -20,7 +20,17 @@
       "Bash(curl *)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['message']['content']\\)\")",
       "Bash(python -c \"import sys,json; merchants=json.load\\(sys.stdin\\); [print\\(m['_id'], m['name']\\) for m in merchants[:15]]\")",
-      "Bash(python -c \"import sys,json; c=json.load\\(sys.stdin\\); print\\(f'{len\\(c\\)} customers found'\\); [print\\(c['_id'], c['first_name']\\) for c in c]\")"
+      "Bash(python -c \"import sys,json; c=json.load\\(sys.stdin\\); print\\(f'{len\\(c\\)} customers found'\\); [print\\(c['_id'], c['first_name']\\) for c in c]\")",
+      "Bash(git push *)",
+      "Bash(npx plugins *)",
+      "Bash(npm i *)",
+      "Bash(vercel ls *)",
+      "Bash(vercel link *)",
+      "Bash(vercel env *)",
+      "Bash(vercel logs *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(vercel *)"
     ]
   }
 }
