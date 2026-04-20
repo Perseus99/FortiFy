@@ -171,7 +171,7 @@ export default function DashboardPage() {
   const projectedSpend = (goal && weekFraction > 0.05) ? categorySpend / weekFraction : categorySpend
   const projectedPct   = goal ? Math.min((projectedSpend / goal.goal_amount) * 100, 140) : 0
   const showProjection = weekFraction < 0.95
-  const trackingDays   = weekStart ? Math.max(1, Math.ceil(daysElapsed)) : null
+  const trackingDays   = (weekStart && daysElapsed <= 7) ? Math.max(1, Math.ceil(daysElapsed)) : null
   const trackingSince  = weekStart ? weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null
 
   // Which reward tier is the projection currently heading for?
