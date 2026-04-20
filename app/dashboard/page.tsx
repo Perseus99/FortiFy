@@ -215,21 +215,17 @@ export default function DashboardPage() {
               {[...allWeeks].reverse().map((w, i) => {
                 const weekNum = i + 1
                 const isSelected = selectedWeek === weekNum
-                const grade = w.score >= 90 ? 'S' : w.score >= 75 ? 'A' : w.score >= 60 ? 'B' : w.score >= 45 ? 'C' : w.score > 0 ? 'D' : '—'
-                const gradeColor = w.score >= 90 ? 'text-amber-400' : w.score >= 75 ? 'text-green-400' : w.score >= 60 ? 'text-blue-400' : w.score >= 45 ? 'text-yellow-400' : w.score > 0 ? 'text-red-400' : 'text-gray-500'
                 return (
                   <button
                     key={w.id}
                     onClick={() => handleSelectWeek(weekNum, w)}
-                    className={`flex flex-col items-center px-3 py-2 rounded-lg border text-xs transition-all ${
+                    className={`px-4 py-2 rounded-lg border text-xs font-semibold transition-all ${
                       isSelected
-                        ? 'border-amber-500 bg-amber-500/10 text-white'
-                        : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500'
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                        : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'
                     }`}
                   >
-                    <span className="font-semibold">Week {weekNum}</span>
-                    <span className={`font-bold text-sm ${gradeColor}`}>{grade}</span>
-                    {w.goal_category && <span className="text-gray-500 text-xs capitalize">{w.goal_category}</span>}
+                    Week {weekNum}
                   </button>
                 )
               })}
