@@ -32,15 +32,16 @@ export async function POST(req: NextRequest) {
 
     const goalAmount = goal?.goal_amount ?? 3000
 
-    // Determine if we're in a new calendar week vs same week re-sync
+    // Date check: has a real calendar week passed since the last goal?
     const today = new Date()
     const todayStr = today.toISOString().split('T')[0]
     const lastWeekStart = goal?.week_start_date ? new Date(goal.week_start_date) : null
     const daysSinceLastWeek = lastWeekStart
       ? Math.floor((today.getTime() - lastWeekStart.getTime()) / (1000 * 60 * 60 * 24))
       : 999
-    const isNewWeek = !goal || goal.completed || daysSinceLastWeek >= 7
+    const calendarWeekTurned = !goal || daysSinceLastWeek >= 7
 
+    // Run analyst — always marks current incomplete goal as completed
     const financialProfile = await runAnalystAgent(userId, profile.nessie_account_id, goalAmount, token)
 
     const { data: gameState } = await db.from('game_state')
@@ -49,31 +50,28 @@ export async function POST(req: NextRequest) {
       .single()
 
     const weekNumber = gameState?.week_number ?? 1
-    const nextWeek = isNewWeek ? weekNumber + 1 : weekNumber
+    const nextWeek = calendarWeekTurned ? weekNumber + 1 : weekNumber
 
-    // Only open a new goal row when the calendar week has turned
-    if (isNewWeek) {
-      // Pick the top spending category and set a targeted reduction goal
-      const cats = financialProfile.categories
-      const categoryLabels: Record<string, string> = {
-        food: 'food', subscriptions: 'subscriptions', shopping: 'shopping',
-        transport: 'transport', entertainment: 'entertainment', utilities: 'utilities', other: 'other spending',
-      }
-      const [topCat, topAmt] = Object.entries(cats).sort(([, a], [, b]) => b - a)[0] ?? ['other', 0]
-      const targetAmt = Math.round(topAmt * 0.8)
-      const newGoalLabel = `Reduce ${categoryLabels[topCat] ?? topCat} spend from $${Math.round(topAmt)} → $${targetAmt}`
-
-      await db.from('weekly_goals').insert({
-        user_id: userId,
-        week_start_date: todayStr,
-        goal_amount: targetAmt,
-        goal_category: topCat,
-        goal_label: newGoalLabel,
-        actual_spent: 0,
-        score: 0,
-        completed: false,
-      })
+    // Always create a fresh goal with the new targeted label after each sync
+    const cats = financialProfile.categories
+    const categoryLabels: Record<string, string> = {
+      food: 'food', subscriptions: 'subscriptions', shopping: 'shopping',
+      transport: 'transport', entertainment: 'entertainment', utilities: 'utilities', other: 'other spending',
     }
+    const [topCat, topAmt] = Object.entries(cats).sort(([, a], [, b]) => b - a)[0] ?? ['other', 0]
+    const targetAmt = Math.round(topAmt * 0.8)
+    const newGoalLabel = `Reduce ${categoryLabels[topCat] ?? topCat} spend from $${Math.round(topAmt)} → $${targetAmt}`
+
+    await db.from('weekly_goals').insert({
+      user_id: userId,
+      week_start_date: todayStr,
+      goal_amount: targetAmt,
+      goal_category: topCat,
+      goal_label: newGoalLabel,
+      actual_spent: 0,
+      score: 0,
+      completed: false,
+    })
 
     const waveConfig = await runGameEngineAgent(userId, financialProfile.score, nextWeek, token)
 
