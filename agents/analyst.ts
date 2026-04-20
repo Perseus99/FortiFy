@@ -16,12 +16,12 @@ Response format:
 
 function keywordCategory(merchant: string): SpendingCategory {
   const m = merchant.toLowerCase()
-  if (/netflix|spotify|hulu|disney|prime|subscription|patreon/.test(m)) return 'subscriptions'
-  if (/restaurant|cafe|pizza|burger|sushi|food|doordash|grubhub|ubereats|starbucks|chipotle|mcdonald/.test(m)) return 'food'
-  if (/amazon|walmart|target|ebay|etsy|shop|store|market/.test(m)) return 'shopping'
-  if (/uber|lyft|metro|transit|gas|shell|chevron|bp|parking/.test(m)) return 'transport'
-  if (/movie|cinema|steam|game|ticket|concert|entertainment/.test(m)) return 'entertainment'
-  if (/electric|water|internet|phone|att|verizon|utility|bill/.test(m)) return 'utilities'
+  if (/netflix|spotify|hulu|disney|apple\s*tv|prime\s*video|subscription|patreon|adobe|duolingo/.test(m)) return 'subscriptions'
+  if (/restaurant|cafe|coffee|bakery|kitchen|pizza|burger|sushi|food|doordash|grubhub|ubereats|starbucks|chipotle|mcdonald|grill|diner|bistro|eatery|taco|sandwich|noodle|ramen|sushi|thai|chinese|indian|bbq|bar\s*&\s*grill|tavern|brewery|winery|vineyard/.test(m)) return 'food'
+  if (/amazon|walmart|target|ebay|etsy|shop|store|market|mall|gift|book|dollar|costco|ikea|best\s*buy|home\s*depot/.test(m)) return 'shopping'
+  if (/uber|lyft|metro|transit|gas|shell|chevron|bp|parking|taxi|train|bus|airline|delta|southwest/.test(m)) return 'transport'
+  if (/movie|cinema|steam|game|ticket|concert|entertainment|netflix|hulu|theater|arcade|bowling|sport|gym|fitness/.test(m)) return 'entertainment'
+  if (/electric|water|internet|phone|att|verizon|t-mobile|utility|bill|comcast|xfinity|spectrum|insurance/.test(m)) return 'utilities'
   return 'other'
 }
 
@@ -89,16 +89,19 @@ export async function runAnalystAgent(
 
   const score = calculateScore(totalSpent, totalIncome, goalAmount)
 
-  const transactionRows = purchases.map((p: any) => ({
-    user_id: userId,
-    nessie_id: p._id,
-    amount: p.amount,
-    merchant: p.description || p.merchant_id,
-    transaction_date: p.purchase_date,
-    category: Object.entries(parsed.categories).find(([, v]) => typeof v === 'number' && v > 0)?.[0] ?? 'other',
-    flagged: parsed.flagged.some((f) => f.merchant === (p.description || p.merchant_id)),
-    flag_reason: parsed.flagged.find((f) => f.merchant === (p.description || p.merchant_id))?.reason ?? null,
-  }))
+  const transactionRows = purchases.map((p: any) => {
+    const merchant = p.description || p.merchant_id || 'Unknown'
+    return {
+      user_id: userId,
+      nessie_id: p._id,
+      amount: p.amount,
+      merchant,
+      transaction_date: p.purchase_date,
+      category: keywordCategory(merchant),
+      flagged: parsed.flagged.some((f) => f.merchant === merchant),
+      flag_reason: parsed.flagged.find((f) => f.merchant === merchant)?.reason ?? null,
+    }
+  })
 
   await db.from('transactions').delete().eq('user_id', userId)
   await db.from('transactions').insert(transactionRows)

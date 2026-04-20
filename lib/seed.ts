@@ -12,20 +12,26 @@ async function createDeposit(accountId: string, amount: number, date: string, de
   return res.json()
 }
 
-// Real Nessie sandbox merchant IDs
-// Weighted toward food/daily spend so total ~$3100–3400 over 28 days
-// Goal is $3000 → slight overage → score ~65–72 (medium wave, winnable)
+// Real Nessie sandbox merchant IDs — spread across categories so keyword
+// categorizer produces a realistic multi-category breakdown
 const MERCHANTS = [
-  { id: '57cf75cea73e494d8675ec4d', name: 'Ithaca Bakery',          weight: 5, min: 8,  max: 18  },
-  { id: '57cf75cea73e494d8675ec56', name: 'Ithaca Coffee Company',   weight: 5, min: 4,  max: 8   },
-  { id: '57cf75cea73e494d8675ec55', name: 'Saigon Kitchen',          weight: 4, min: 11, max: 22  },
-  { id: '57cf75cea73e494d8675ec50', name: 'Terra Rosa',              weight: 3, min: 10, max: 20  },
-  { id: '57cf75cea73e494d8675ec52', name: 'Dollar Tree',             weight: 3, min: 12, max: 30  },
-  { id: '57cf75cea73e494d8675ec58', name: 'The Bookery',             weight: 2, min: 12, max: 28  },
-  { id: '57cf75cea73e494d8675ec49', name: 'Apple',                   weight: 1, min: 9,  max: 15  },
-  { id: '57cf75cea73e494d8675ec53', name: 'AT&T',                    weight: 1, min: 55, max: 70  },
-  { id: '57cf75cea73e494d8675ec54', name: 'Six Mile Creek Vineyard', weight: 1, min: 22, max: 40  },
-  { id: '57cf75cea73e494d8675ec51', name: 'shworldofgifts',          weight: 1, min: 18, max: 45  },
+  // Food (~40% weight)
+  { id: '57cf75cea73e494d8675ec4d', name: 'Ithaca Bakery & Cafe',    weight: 5, min: 8,  max: 18  },
+  { id: '57cf75cea73e494d8675ec56', name: 'Starbucks Coffee',         weight: 4, min: 4,  max: 8   },
+  { id: '57cf75cea73e494d8675ec55', name: 'Chipotle Restaurant',      weight: 3, min: 11, max: 22  },
+  { id: '57cf75cea73e494d8675ec50', name: 'Local Grill & Bistro',     weight: 2, min: 10, max: 20  },
+  // Shopping (~20% weight)
+  { id: '57cf75cea73e494d8675ec52', name: 'Target Store',             weight: 3, min: 15, max: 45  },
+  { id: '57cf75cea73e494d8675ec51', name: 'Amazon Marketplace',       weight: 2, min: 18, max: 60  },
+  // Subscriptions (~15% weight)
+  { id: '57cf75cea73e494d8675ec49', name: 'Netflix Subscription',     weight: 1, min: 15, max: 18  },
+  { id: '57cf75cea73e494d8675ec58', name: 'Spotify Subscription',     weight: 1, min: 9,  max: 10  },
+  { id: '57cf75cea73e494d8675ec53', name: 'Adobe Subscription',       weight: 1, min: 54, max: 55  },
+  // Utilities (~10% weight)
+  { id: '57cf75cea73e494d8675ec54', name: 'Verizon Phone Bill',       weight: 1, min: 65, max: 75  },
+  // Entertainment (~10% weight)
+  { id: '57cf75cea73e494d8675ec5a', name: 'Cinema Movie Tickets',     weight: 1, min: 14, max: 28  },
+  { id: '57cf75cea73e494d8675ec5b', name: 'Steam Game Store',         weight: 1, min: 10, max: 30  },
 ]
 
 // Build weighted merchant pool
