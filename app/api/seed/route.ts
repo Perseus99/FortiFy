@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     await db.from('weekly_goals').insert({
       user_id: userId,
       week_start_date: weekStart.toISOString().split('T')[0],
-      goal_amount: 500,
+      goal_amount: 3000,
     })
 
     return NextResponse.json({ customerId, accountId })
