@@ -1,4 +1,4 @@
-import { chatWithHistory } from '@/lib/ollama'
+import { chatWithHistory } from '@/lib/claude'
 import type { NPCMessage, NPCContext } from './npc'
 
 const SYSTEM_PROMPT = (ctx: NPCContext) => `You are The Scout — a sharp-eyed spending investigator in a tower defense game called FortifyFi.

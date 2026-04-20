@@ -296,6 +296,7 @@ export class GameScene extends Phaser.Scene {
   // ── Input ──────────────────────────────────────────────────
 
   private setupInput() {
+    this.game.canvas.addEventListener('contextmenu', e => e.preventDefault())
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.hoverCell.clear()
       if (p.y < UI_H) return
@@ -379,7 +380,12 @@ export class GameScene extends Phaser.Scene {
     container.setScale(0.1)
     this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 200, ease: 'Back.easeOut' })
 
-    this.towers.push({ col, row, type, container, rangeCircle: rc, lastFired: 0, barrel })
+    const towerObj: TowerObj = { col, row, type, container, rangeCircle: rc, lastFired: 0, barrel }
+    this.towers.push(towerObj)
+
+    container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) this.sellTower(towerObj)
+    })
   }
 
   // ── Wave spawning ───────────────────────────────────────────
@@ -558,21 +564,36 @@ export class GameScene extends Phaser.Scene {
 
       const tx = cx(tower.col), ty = cy(tower.row)
       const rangePx = def.range * CELL
-      let target: EnemyObj | null = null, best = Infinity
+      let target: EnemyObj | null = null, bestProgress = -Infinity
 
       for (const e of this.enemies) {
         if (!e.alive) continue
         const d = Phaser.Math.Distance.Between(tx, ty, e.container.x, e.container.y)
-        if (d <= rangePx && d < best) { target = e; best = d }
+        if (d > rangePx) continue
+        // Prioritise enemy furthest along path (highest wpIdx), tiebreak by distance to next waypoint
+        const nextWp = WAYPOINTS[Math.min(e.wpIdx, WAYPOINTS.length - 1)]
+        const distToNext = Phaser.Math.Distance.Between(e.container.x, e.container.y, cx(nextWp.col), cy(nextWp.row))
+        const progress = e.wpIdx * 10000 - distToNext
+        if (progress > bestProgress) { target = e; bestProgress = progress }
       }
 
       if (target) {
-      tower.lastFired = time
-      // Tower fire pulse
-      this.tweens.add({ targets: tower.container, scaleX: 1.12, scaleY: 1.12, duration: 80, yoyo: true, ease: 'Power2' })
-      this.shoot(tower, target)
+        tower.lastFired = time
+        this.tweens.add({ targets: tower.container, scaleX: 1.12, scaleY: 1.12, duration: 80, yoyo: true, ease: 'Power2' })
+        this.shoot(tower, target)
+      }
     }
-    }
+  }
+
+  private sellTower(tower: TowerObj) {
+    const idx = this.towers.indexOf(tower)
+    if (idx === -1) return
+    const refund = Math.floor(TOWERS[tower.type].cost / 2)
+    this.towers.splice(idx, 1)
+    tower.container.destroy()
+    this.points += refund
+    this.updateHUD()
+    this.flash(`Sold! +${refund}pts`, '#fbbf24')
   }
 
   private shoot(tower: TowerObj, enemy: EnemyObj) {

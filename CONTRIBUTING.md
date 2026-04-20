@@ -176,7 +176,7 @@ If a deployment fails, click it to see the build logs. Common causes:
 
 ## Gotchas
 
-- **`lib/ollama.ts`** is named "ollama" for legacy reasons but actually calls the Claude API. Don't rename it — it's imported everywhere.
+- **`lib/claude.ts`** is the Anthropic SDK wrapper. All agent LLM calls go through `chat()` or `chatWithHistory()` from this file.
 - **Nessie data is static** — the sandbox doesn't have real weekly transactions. "Syncing" re-scores the same data. This is expected for demo purposes.
 - **Week progression** is date-gated — syncing twice in the same 7-day window won't advance the week. To force-advance for testing, update `game_state.week_number` directly in Supabase SQL Editor.
 - **The game loads in `no-ssr` mode** via `next/dynamic` — Phaser doesn't work server-side.

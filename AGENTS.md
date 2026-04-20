@@ -13,7 +13,7 @@ FortifyFi is a tower defense game driven by real financial data. The architectur
 
 ## Key conventions
 
-- `lib/ollama.ts` is the Claude API wrapper. It is named "ollama" for historical reasons. Do not rename it — it is imported everywhere as `@/lib/ollama`.
+- `lib/claude.ts` is the Claude API wrapper (Anthropic SDK). All agent LLM calls go through `chat()` or `chatWithHistory()` exported from there.
 - All Supabase calls use either the public anon client (`lib/supabase.ts`) or the auth client (`createAuthClient(token)`) depending on whether RLS matters.
 - API routes live in `app/api/`. All routes that touch user data require a Bearer token and use `createAuthClient`.
 - The Phaser game scene (`components/game/GameScene.ts`) is loaded client-side only via `next/dynamic` with `ssr: false`.

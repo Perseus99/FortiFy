@@ -1,4 +1,4 @@
-import { chat } from '@/lib/ollama'
+import { chat } from '@/lib/claude'
 import { getPurchases, getDeposits } from '@/lib/nessie'
 import { createAuthClient } from '@/lib/supabase'
 import type { FinancialProfile, SpendingCategory, Transaction } from '@/lib/types'

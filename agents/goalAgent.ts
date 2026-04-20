@@ -1,4 +1,4 @@
-import { chat } from '@/lib/ollama'
+import { chat } from '@/lib/claude'
 
 export interface GoalAgentInput {
   categories: Record<string, number>

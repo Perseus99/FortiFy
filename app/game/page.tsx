@@ -60,8 +60,11 @@ export default function GamePage() {
       { user_id: userId, points: res.points, city_health: res.cityHealth },
       { onConflict: 'user_id' }
     )
-    // Trigger NPC: Warden on loss or close call, Scout on clean win
-    setActiveNPC(!res.won || res.cityHealth < 50 ? 'warden' : 'scout')
+  }
+
+  function openPostGameNPC() {
+    if (!result) return
+    setActiveNPC(!result.won || result.cityHealth < 50 ? 'warden' : 'scout')
   }
 
   if (loading) return (
@@ -96,10 +99,16 @@ export default function GamePage() {
             <p className="text-gray-300 text-sm mt-1">
               Points: {result.points} &nbsp;|&nbsp; City HP: {result.cityHealth}
             </p>
-            <button onClick={() => router.push('/dashboard')}
-              className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded font-semibold text-sm transition-colors">
-              Back to Dashboard
-            </button>
+            <div className="flex gap-3 justify-center mt-3">
+              <button onClick={openPostGameNPC}
+                className="px-4 py-2 border border-amber-600 hover:border-amber-400 text-amber-400 rounded font-semibold text-sm transition-colors">
+                Talk to Advisor
+              </button>
+              <button onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded font-semibold text-sm transition-colors">
+                Back to Dashboard
+              </button>
+            </div>
           </div>
         )}
 
@@ -120,7 +129,7 @@ export default function GamePage() {
           </div>
           <div className="bg-gray-900 p-3 rounded-lg">
             <p className="text-amber-400 font-semibold mb-1">How to play</p>
-            <p className="text-gray-400">Select tower type · click any non-path cell to place · hover tower to see range</p>
+            <p className="text-gray-400">Select tower · click to place · hover to see range · right-click to sell (½ refund)</p>
           </div>
         </div>
 

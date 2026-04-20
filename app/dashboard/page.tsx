@@ -249,17 +249,22 @@ export default function DashboardPage() {
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
             <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Week Score</p>
             {goal?.score != null ? (
-              <div className="flex items-center gap-2">
-                <p className="text-3xl font-bold text-green-400">{goal.score}</p>
-                <span className={`text-sm font-bold px-2 py-0.5 rounded ${
-                  goal.score >= 90 ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500' :
-                  goal.score >= 75 ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500' :
-                  goal.score >= 60 ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500' :
-                  goal.score >= 45 ? 'bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500' :
-                                     'bg-red-500/20 text-red-400 ring-1 ring-red-500'
-                }`}>
-                  {goal.score >= 90 ? 'S' : goal.score >= 75 ? 'A' : goal.score >= 60 ? 'B' : goal.score >= 45 ? 'C' : 'D'}
-                </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-3xl font-bold text-green-400">{goal.score}</p>
+                  <span className={`text-sm font-bold px-2 py-0.5 rounded ${
+                    goal.score >= 90 ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500' :
+                    goal.score >= 75 ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500' :
+                    goal.score >= 60 ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500' :
+                    goal.score >= 45 ? 'bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500' :
+                                       'bg-red-500/20 text-red-400 ring-1 ring-red-500'
+                  }`}>
+                    {goal.score >= 90 ? 'S' : goal.score >= 75 ? 'A' : goal.score >= 60 ? 'B' : goal.score >= 45 ? 'C' : 'D'}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-xs mt-1">
+                  {goal.score >= 80 ? 'Easy wave · bonus tower unlocked' : goal.score >= 50 ? 'Medium wave' : 'Hard wave · city pre-damaged'}
+                </p>
               </div>
             ) : <p className="text-3xl font-bold text-green-400">—</p>}
           </div>
@@ -408,6 +413,9 @@ export default function DashboardPage() {
                       <p className="text-white text-sm">{txn.merchant ?? 'Unknown'}</p>
                       {txn.flag_reason && (
                         <p className="text-red-400 text-xs">{txn.flag_reason}</p>
+                      )}
+                      {txn.transaction_date && (
+                        <p className="text-gray-600 text-xs">{new Date(txn.transaction_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
                       )}
                     </div>
                   </div>
