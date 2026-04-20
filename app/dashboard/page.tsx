@@ -16,10 +16,12 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading]     = useState(true)
   const [activeNPC, setActiveNPC] = useState<NPCType | null>(null)
-  const [syncing, setSyncing]     = useState(false)
-  const [syncMsg, setSyncMsg]     = useState('')
+  const [syncing, setSyncing]       = useState(false)
+  const [syncMsg, setSyncMsg]       = useState('')
   const [needsSetup, setNeedsSetup] = useState(false)
   const [dismissing, setDismissing] = useState(false)
+  const [allWeeks, setAllWeeks]     = useState<WeeklyGoal[]>([])
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -28,23 +30,35 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: profile }, { data: gs }, { data: wg }, { data: txns }] = await Promise.all([
+      const [{ data: profile }, { data: gs }, { data: wg }, { data: txns }, { data: weeks }] = await Promise.all([
         supabase.from('profiles').select('nessie_account_id').eq('id', user.id).single(),
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
         supabase.from('transactions').select('*').eq('user_id', user.id)
           .order('transaction_date', { ascending: false }).limit(20),
+        supabase.from('weekly_goals').select('*').eq('user_id', user.id)
+          .order('week_start_date', { ascending: false }).limit(8),
       ])
 
       if (!profile?.nessie_account_id) setNeedsSetup(true)
-      if (gs) setGameState(gs)
+      if (gs) { setGameState(gs); setSelectedWeek(gs.week_number) }
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
+      if (weeks) setAllWeeks(weeks)
       setLoading(false)
     }
     load()
   }, [])
+
+  async function handleSelectWeek(weekNum: number, weekGoal: WeeklyGoal) {
+    if (!userId) return
+    // Update game_state.week_number so the game loads that week's wave_config
+    await supabase.from('game_state').update({ week_number: weekNum }).eq('user_id', userId)
+    setSelectedWeek(weekNum)
+    setGoal(weekGoal)
+    if (gameState) setGameState({ ...gameState, week_number: weekNum })
+  }
 
   async function getToken(): Promise<string | null> {
     const { data: { session } } = await supabase.auth.getSession()
@@ -190,6 +204,39 @@ export default function DashboardPage() {
         {syncMsg && !needsSetup && (
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-300">
             {syncMsg}
+          </div>
+        )}
+
+        {/* Week selector */}
+        {allWeeks.length > 1 && (
+          <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-3">Week History</p>
+            <div className="flex gap-2 flex-wrap">
+              {[...allWeeks].reverse().map((w, i) => {
+                const weekNum = i + 1
+                const isSelected = selectedWeek === weekNum
+                const grade = w.score >= 90 ? 'S' : w.score >= 75 ? 'A' : w.score >= 60 ? 'B' : w.score >= 45 ? 'C' : w.score > 0 ? 'D' : '—'
+                const gradeColor = w.score >= 90 ? 'text-amber-400' : w.score >= 75 ? 'text-green-400' : w.score >= 60 ? 'text-blue-400' : w.score >= 45 ? 'text-yellow-400' : w.score > 0 ? 'text-red-400' : 'text-gray-500'
+                return (
+                  <button
+                    key={w.id}
+                    onClick={() => handleSelectWeek(weekNum, w)}
+                    className={`flex flex-col items-center px-3 py-2 rounded-lg border text-xs transition-all ${
+                      isSelected
+                        ? 'border-amber-500 bg-amber-500/10 text-white'
+                        : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <span className="font-semibold">Week {weekNum}</span>
+                    <span className={`font-bold text-sm ${gradeColor}`}>{grade}</span>
+                    {w.goal_category && <span className="text-gray-500 text-xs capitalize">{w.goal_category}</span>}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedWeek && selectedWeek !== gameState?.week_number && (
+              <p className="text-amber-400 text-xs mt-2">⚠ Viewing Week {selectedWeek} — Play This Week will use this wave</p>
+            )}
           </div>
         )}
 

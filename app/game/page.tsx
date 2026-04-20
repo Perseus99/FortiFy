@@ -32,15 +32,21 @@ export default function GamePage() {
       setUserId(user.id)
 
       const [{ data: gs }, { data: wc }] = await Promise.all([
-        supabase.from('game_state').select('points,city_health').eq('user_id', user.id).single(),
+        supabase.from('game_state').select('points,city_health,week_number').eq('user_id', user.id).single(),
         supabase.from('wave_config').select('*').eq('user_id', user.id)
-          .order('created_at', { ascending: false }).limit(1).single(),
+          .order('week_number', { ascending: false }).limit(1).single(),
       ])
 
+      // If a specific week was selected, load that week's wave config
+      const weekNum = gs?.week_number
+      const { data: weekWc } = weekNum
+        ? await supabase.from('wave_config').select('*').eq('user_id', user.id).eq('week_number', weekNum).single()
+        : { data: null }
+
       setInitData({
-        points:     Math.max(gs?.points ?? 0, 250), // always start with at least 250
+        points:     Math.max(gs?.points ?? 0, 250),
         cityHealth: gs?.city_health ?? 100,
-        waveConfig: wc ?? DEFAULT_WAVE,
+        waveConfig: weekWc ?? wc ?? DEFAULT_WAVE,
       })
       setLoading(false)
     }
