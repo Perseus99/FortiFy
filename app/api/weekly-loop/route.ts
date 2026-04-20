@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+// Returns the ISO Monday of the week containing `date`, as YYYY-MM-DD (UTC)
+function isoWeekStart(date: Date): string {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+  const day = d.getUTCDay()
+  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1))
+  return d.toISOString().split('T')[0]
+}
 import { runAnalystAgent } from '@/agents/analyst'
 import { runGameEngineAgent } from '@/agents/gameEngine'
 import { runGoalAgent } from '@/agents/goalAgent'
@@ -33,14 +41,11 @@ export async function POST(req: NextRequest) {
 
     const goalAmount = goal?.goal_amount ?? 3000
 
-    // Date check: has a real calendar week passed since the last goal?
+    // ISO week start = Monday of the current calendar week (UTC)
     const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
-    const lastWeekStart = goal?.week_start_date ? new Date(goal.week_start_date) : null
-    const daysSinceLastWeek = lastWeekStart
-      ? Math.floor((today.getTime() - lastWeekStart.getTime()) / (1000 * 60 * 60 * 24))
-      : 999
-    const calendarWeekTurned = !goal || daysSinceLastWeek >= 7
+    const weekStartStr = isoWeekStart(today)
+    // A new week has turned if the current ISO Monday differs from the last goal's week_start_date
+    const calendarWeekTurned = !goal || goal.week_start_date !== weekStartStr
 
     // Run analyst — always marks current incomplete goal as completed
     const financialProfile = await runAnalystAgent(userId, profile.nessie_account_id, goalAmount, token)
@@ -115,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     await db.from('weekly_goals').insert({
       user_id: userId,
-      week_start_date: todayStr,
+      week_start_date: weekStartStr,
       goal_amount: goalResult.goal_amount,
       goal_category: goalResult.goal_category,
       goal_label: goalResult.goal_label,
