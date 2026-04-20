@@ -24,14 +24,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No Nessie account. Run /api/seed first.' }, { status: 400 })
 
     const { data: goal } = await db.from('weekly_goals')
-      .select('goal_amount')
+      .select('goal_amount, week_start_date, completed')
       .eq('user_id', userId)
-      .eq('completed', false)
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
 
-    const goalAmount = goal?.goal_amount ?? 500
+    const goalAmount = goal?.goal_amount ?? 3000
+
+    // Determine if we're in a new calendar week vs same week re-sync
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+    const lastWeekStart = goal?.week_start_date ? new Date(goal.week_start_date) : null
+    const daysSinceLastWeek = lastWeekStart
+      ? Math.floor((today.getTime() - lastWeekStart.getTime()) / (1000 * 60 * 60 * 24))
+      : 999
+    const isNewWeek = !goal || goal.completed || daysSinceLastWeek >= 7
 
     const financialProfile = await runAnalystAgent(userId, profile.nessie_account_id, goalAmount, token)
 
@@ -41,17 +49,19 @@ export async function POST(req: NextRequest) {
       .single()
 
     const weekNumber = gameState?.week_number ?? 1
-    const nextWeek = weekNumber + 1
+    const nextWeek = isNewWeek ? weekNumber + 1 : weekNumber
 
-    // Open a fresh goal for the coming week
-    await db.from('weekly_goals').insert({
-      user_id: userId,
-      week_start_date: new Date().toISOString().split('T')[0],
-      goal_amount: goalAmount,
-      actual_spent: 0,
-      score: 0,
-      completed: false,
-    })
+    // Only open a new goal row when the calendar week has turned
+    if (isNewWeek) {
+      await db.from('weekly_goals').insert({
+        user_id: userId,
+        week_start_date: todayStr,
+        goal_amount: goalAmount,
+        actual_spent: 0,
+        score: 0,
+        completed: false,
+      })
+    }
 
     const waveConfig = await runGameEngineAgent(userId, financialProfile.score, nextWeek, token)
 
