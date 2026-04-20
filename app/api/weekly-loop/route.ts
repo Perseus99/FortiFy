@@ -60,7 +60,14 @@ export async function POST(req: NextRequest) {
       if (t.category) catTotals[t.category] = (catTotals[t.category] ?? 0) + Number(t.amount)
     })
 
-    // Goal Agent: picks riskiest category, not just highest spend
+    // Load user's dismissed category preferences
+    const { data: prefs } = await db.from('category_preferences')
+      .select('category')
+      .eq('user_id', userId)
+      .eq('dismissed', true)
+    const excludedCategories = (prefs ?? []).map(p => p.category)
+
+    // Goal Agent: picks riskiest non-dismissed category
     const goalResult = await runGoalAgent({
       categories: catTotals,
       flaggedTransactions: financialProfile.flagged_transactions.map(t => ({
@@ -70,6 +77,7 @@ export async function POST(req: NextRequest) {
       })),
       totalSpent: financialProfile.total_spent,
       totalIncome: financialProfile.total_income,
+      excludedCategories,
     })
 
     await db.from('weekly_goals').insert({

@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [syncing, setSyncing]     = useState(false)
   const [syncMsg, setSyncMsg]     = useState('')
   const [needsSetup, setNeedsSetup] = useState(false)
+  const [dismissing, setDismissing] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -103,6 +104,23 @@ export default function DashboardPage() {
       setSyncMsg(`Sync failed: ${err.error}`)
     }
     setSyncing(false)
+  }
+
+  async function handleDismissGoal() {
+    if (!userId || !goal?.goal_category) return
+    setDismissing(true)
+    const token = await getToken()
+    if (!token) { setDismissing(false); return }
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId, category: goal.goal_category, reason: 'User marked as intentional' }),
+    })
+    if (res.ok) {
+      const { goal: newGoal } = await res.json()
+      setGoal(newGoal)
+    }
+    setDismissing(false)
   }
 
   async function handleLogout() {
@@ -262,6 +280,18 @@ export default function DashboardPage() {
                   : `$${(goal.goal_amount - categorySpend).toFixed(0)} left to hit goal`}
               </span>
             </div>
+            {goal.goal_category && (
+              <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between">
+                <p className="text-gray-500 text-xs">This spend is intentional?</p>
+                <button
+                  onClick={handleDismissGoal}
+                  disabled={dismissing}
+                  className="text-xs text-gray-400 hover:text-amber-400 disabled:opacity-40 transition-colors underline underline-offset-2"
+                >
+                  {dismissing ? 'Recalculating...' : `Skip ${goal.goal_category} → find another goal`}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

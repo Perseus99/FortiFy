@@ -5,6 +5,7 @@ export interface GoalAgentInput {
   flaggedTransactions: { merchant: string; amount: number; flag_reason: string | null }[]
   totalSpent: number
   totalIncome: number
+  excludedCategories?: string[]  // user-dismissed categories, skip these
 }
 
 export interface GoalOutput {
@@ -35,16 +36,16 @@ function scoreRisk(
 }
 
 function ruleBasedGoal(input: GoalAgentInput): GoalOutput {
-  const { categories, flaggedTransactions, totalSpent } = input
+  const { categories, flaggedTransactions, totalSpent, excludedCategories = [] } = input
 
   const categoryLabels: Record<string, string> = {
     food: 'food', subscriptions: 'subscriptions', shopping: 'shopping',
     transport: 'transport', entertainment: 'entertainment', utilities: 'utilities', other: 'other spending',
   }
 
-  // Score each category by risk, not just spend amount
+  // Score each category by risk, skip user-dismissed ones
   const scored = Object.entries(categories)
-    .filter(([, amt]) => Number(amt) > 0)
+    .filter(([cat, amt]) => Number(amt) > 0 && !excludedCategories.includes(cat))
     .map(([cat, amt]) => ({
       cat,
       amt: Number(amt),
@@ -74,10 +75,10 @@ function ruleBasedGoal(input: GoalAgentInput): GoalOutput {
 }
 
 export async function runGoalAgent(input: GoalAgentInput): Promise<GoalOutput> {
-  const { categories, flaggedTransactions, totalSpent, totalIncome } = input
+  const { categories, flaggedTransactions, totalSpent, totalIncome, excludedCategories = [] } = input
 
   const categoryList = Object.entries(categories)
-    .filter(([, v]) => Number(v) > 0)
+    .filter(([cat, v]) => Number(v) > 0 && !excludedCategories.includes(cat))
     .map(([k, v]) => `${k}: $${Number(v).toFixed(2)}`)
     .join(', ')
 
@@ -85,11 +86,15 @@ export async function runGoalAgent(input: GoalAgentInput): Promise<GoalOutput> {
     ? flaggedTransactions.map(t => `${t.merchant} $${Number(t.amount).toFixed(2)} — ${t.flag_reason ?? 'suspicious'}`).join('; ')
     : 'none'
 
+  const exclusionNote = excludedCategories.length > 0
+    ? `\nUser has marked these categories as intentional — do NOT target them: ${excludedCategories.join(', ')}`
+    : ''
+
   const prompt = `You are a financial risk analyst. Given a user's spending data, identify the RISKIEST spending category — not necessarily the largest. Risk factors: subscriptions (easy to forget, compound silently), flagged/suspicious transactions, impulse categories (shopping, entertainment), high frequency small purchases.
 
-Spending by category: ${categoryList}
+Spending by category: ${categoryList || 'none available'}
 Flagged transactions: ${flagList}
-Total spent: $${totalSpent.toFixed(2)} | Total income: $${totalIncome.toFixed(2)}
+Total spent: $${totalSpent.toFixed(2)} | Total income: $${totalIncome.toFixed(2)}${exclusionNote}
 
 Return ONLY valid JSON, no explanation:
 {
