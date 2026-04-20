@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runAnalystAgent } from '@/agents/analyst'
 import { runGameEngineAgent } from '@/agents/gameEngine'
+import { runGoalAgent } from '@/agents/goalAgent'
 import { createAuthClient } from '@/lib/supabase'
 
 export const maxDuration = 300
@@ -52,27 +53,31 @@ export async function POST(req: NextRequest) {
     const weekNumber = gameState?.week_number ?? 1
     const nextWeek = calendarWeekTurned ? weekNumber + 1 : weekNumber
 
-    // Compute category totals from the saved transactions (accurate, not LLM estimates)
+    // Compute accurate category totals from saved transactions
     const { data: savedTxns } = await db.from('transactions').select('category, amount').eq('user_id', userId)
     const catTotals: Record<string, number> = {}
     savedTxns?.forEach(t => {
       if (t.category) catTotals[t.category] = (catTotals[t.category] ?? 0) + Number(t.amount)
     })
 
-    const categoryLabels: Record<string, string> = {
-      food: 'food', subscriptions: 'subscriptions', shopping: 'shopping',
-      transport: 'transport', entertainment: 'entertainment', utilities: 'utilities', other: 'other spending',
-    }
-    const [topCat, topAmt] = Object.entries(catTotals).sort(([, a], [, b]) => b - a)[0] ?? ['other', 0]
-    const targetAmt = Math.round(topAmt * 0.8)
-    const newGoalLabel = `Reduce ${categoryLabels[topCat] ?? topCat} spend from $${Math.round(topAmt)} → $${targetAmt}`
+    // Goal Agent: picks riskiest category, not just highest spend
+    const goalResult = await runGoalAgent({
+      categories: catTotals,
+      flaggedTransactions: financialProfile.flagged_transactions.map(t => ({
+        merchant: t.merchant ?? 'Unknown',
+        amount: Number(t.amount),
+        flag_reason: t.flag_reason,
+      })),
+      totalSpent: financialProfile.total_spent,
+      totalIncome: financialProfile.total_income,
+    })
 
     await db.from('weekly_goals').insert({
       user_id: userId,
       week_start_date: todayStr,
-      goal_amount: targetAmt,
-      goal_category: topCat,
-      goal_label: newGoalLabel,
+      goal_amount: goalResult.goal_amount,
+      goal_category: goalResult.goal_category,
+      goal_label: goalResult.goal_label,
       actual_spent: 0,
       score: 0,
       completed: false,
