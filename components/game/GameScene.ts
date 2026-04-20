@@ -8,7 +8,6 @@ const UI_H = 64
 const GAME_W = COLS * CELL   // 960
 const GAME_H = ROWS * CELL + UI_H  // 640
 
-// Path waypoints – enemies walk corner-to-corner
 const WAYPOINTS = [
   { col: 0,  row: 5 },
   { col: 5,  row: 5 },
@@ -17,7 +16,7 @@ const WAYPOINTS = [
   { col: 12, row: 8 },
   { col: 17, row: 8 },
   { col: 17, row: 5 },
-  { col: 20, row: 5 },  // exit (off-screen)
+  { col: 20, row: 5 },
 ]
 
 function buildPathCells() {
@@ -74,6 +73,7 @@ interface TowerObj {
   container: Phaser.GameObjects.Container
   rangeCircle: Phaser.GameObjects.Graphics
   lastFired: number
+  barrel?: Phaser.GameObjects.Graphics
 }
 
 // ── Scene ────────────────────────────────────────────────────
@@ -97,13 +97,14 @@ export class GameScene extends Phaser.Scene {
   private archerBtn!: Phaser.GameObjects.Container
   private cannonBtn!: Phaser.GameObjects.Container
   private hoverCell!: Phaser.GameObjects.Graphics
+  private cityHpBar!: Phaser.GameObjects.Graphics
 
   constructor() { super({ key: 'GameScene' }) }
 
   init(data: GameInitData) {
     if (data) {
-      this.points      = data.points      ?? 200
-      this.cityHealth  = data.cityHealth  ?? 100
+      this.points     = data.points     ?? 200
+      this.cityHealth = data.cityHealth ?? 100
       if (data.waveConfig) this.waveConfig = data.waveConfig
     }
     this.towers = []; this.enemies = []
@@ -111,26 +112,36 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // Background
-    this.add.rectangle(GAME_W / 2, UI_H + (ROWS * CELL) / 2, GAME_W, ROWS * CELL, 0x1a1a2e)
-
+    this.drawBackground()
     this.drawGrid()
     this.drawPath()
+    this.drawLandmarks()
     this.createUI()
     this.createSelector()
     this.setupInput()
     this.startWave()
   }
 
-  // ── Drawing ────────────────────────────────────────────────
+  // ── Map drawing ────────────────────────────────────────────
+
+  private drawBackground() {
+    const bg = this.add.graphics()
+    for (let c = 0; c < COLS; c++) {
+      for (let r = 0; r < ROWS; r++) {
+        if (!PATH_CELLS.has(`${c},${r}`)) {
+          bg.fillStyle((c + r) % 2 === 0 ? 0x1a2e1a : 0x1c311c, 1)
+          bg.fillRect(c * CELL, UI_H + r * CELL, CELL, CELL)
+        }
+      }
+    }
+  }
+
   private drawGrid() {
     const g = this.add.graphics()
-    g.lineStyle(1, 0x2a2a4a, 0.6)
+    g.lineStyle(1, 0x2a4a2a, 0.35)
     for (let c = 0; c <= COLS; c++) { g.moveTo(c * CELL, UI_H); g.lineTo(c * CELL, UI_H + ROWS * CELL) }
     for (let r = 0; r <= ROWS; r++) { g.moveTo(0, UI_H + r * CELL); g.lineTo(GAME_W, UI_H + r * CELL) }
     g.strokePath()
-
-    // Hover highlight (updated on pointer move)
     this.hoverCell = this.add.graphics()
   }
 
@@ -138,53 +149,101 @@ export class GameScene extends Phaser.Scene {
     const g = this.add.graphics()
     PATH_CELLS.forEach(key => {
       const [col, row] = key.split(',').map(Number)
-      g.fillStyle(0x5c3d2e, 1)
-      g.fillRect(col * CELL + 1, UI_H + row * CELL + 1, CELL - 2, CELL - 2)
+      const x = col * CELL, y = UI_H + row * CELL
+      // Base dirt
+      g.fillStyle(0x8b6914, 1).fillRect(x, y, CELL, CELL)
+      // Center lighter strip
+      g.fillStyle(0xa07820, 0.5).fillRect(x + 5, y + 5, CELL - 10, CELL - 10)
+      // Edge shadows
+      g.fillStyle(0x5a4410, 0.6)
+      g.fillRect(x, y, CELL, 2)
+      g.fillRect(x, y + CELL - 2, CELL, 2)
     })
-    // Direction dots
-    g.fillStyle(0x8b5e4a, 0.8)
-    for (let i = 1; i < WAYPOINTS.length - 1; i++) {
-      const w = WAYPOINTS[i]
-      g.fillCircle(cx(w.col), cy(w.row), 5)
+    // Mid-segment dots
+    g.fillStyle(0xd4a017, 0.45)
+    for (let i = 0; i < WAYPOINTS.length - 1; i++) {
+      const a = WAYPOINTS[i], b = WAYPOINTS[i + 1]
+      g.fillCircle(cx((a.col + b.col) / 2), cy((a.row + b.row) / 2), 3)
+    }
+  }
+
+  private drawLandmarks() {
+    // Entry portal
+    this.add.text(cx(0), cy(5), '⚡', { fontSize: '28px' }).setOrigin(0.5).setDepth(2)
+    // Castle at exit
+    this.add.text(GAME_W - 18, cy(5), '🏰', { fontSize: '34px' }).setOrigin(0.5).setDepth(2)
+    // Decorative trees
+    const trees: [number, number][] = [
+      [2,1],[8,1],[14,1],[18,1],
+      [2,10],[7,10],[14,10],[18,10],
+      [1,4],[3,7],[8,6],[15,4],[10,4],[10,10],
+    ]
+    for (const [c, r] of trees) {
+      if (!PATH_CELLS.has(`${c},${r}`)) {
+        this.add.text(cx(c), cy(r), '🌲', { fontSize: '20px' }).setOrigin(0.5).setAlpha(0.75).setDepth(1)
+      }
     }
   }
 
   // ── UI ─────────────────────────────────────────────────────
-  private createUI() {
-    this.add.rectangle(GAME_W / 2, UI_H / 2, GAME_W, UI_H, 0x0d0d1a)
-    this.add.text(14, 8, 'FORTIFYFI', { fontSize: '13px', color: '#f59e0b', fontStyle: 'bold' })
 
-    this.ptText = this.add.text(14, 30, `Points: ${this.points}`,     { fontSize: '14px', color: '#fbbf24' })
-    this.hpText = this.add.text(190, 30, `City HP: ${this.cityHealth}`, { fontSize: '14px', color: '#f87171' })
-    this.wvText = this.add.text(370, 30, `Enemies: 0/${this.waveConfig.enemy_count}`, { fontSize: '14px', color: '#94a3b8' })
+  private createUI() {
+    const bar = this.add.graphics()
+    bar.fillStyle(0x080e1a, 1).fillRect(0, 0, GAME_W, UI_H)
+    bar.lineStyle(2, 0xf59e0b, 0.5).strokeRect(0, 0, GAME_W, UI_H)
+
+    this.add.text(14, 8, '⚔️  FORTIFYFI', { fontSize: '13px', color: '#f59e0b', fontStyle: 'bold' })
+
+    this.add.text(14, 32, '💰', { fontSize: '13px' })
+    this.ptText = this.add.text(32, 33, `${this.points} pts`, { fontSize: '12px', color: '#fbbf24' })
+
+    this.add.text(155, 32, '🏰', { fontSize: '13px' })
+    this.hpText = this.add.text(173, 33, `${this.cityHealth} HP`, { fontSize: '12px', color: '#f87171' })
+    this.cityHpBar = this.add.graphics()
+    this.drawCityHpBar()
+
+    this.add.text(360, 32, '👾', { fontSize: '13px' })
+    this.wvText = this.add.text(378, 33, `0/${this.waveConfig.enemy_count}`, { fontSize: '12px', color: '#94a3b8' })
 
     this.msgText = this.add.text(GAME_W / 2, UI_H + (ROWS * CELL) / 2, '', {
-      fontSize: '36px', color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 5,
+      fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 6,
     }).setOrigin(0.5).setDepth(20)
+  }
+
+  private drawCityHpBar() {
+    this.cityHpBar.clear()
+    const x = 230, y = 36, w = 110, h = 10
+    const pct = Math.max(0, this.cityHealth / 100)
+    const color = pct > 0.5 ? 0x22c55e : pct > 0.25 ? 0xf59e0b : 0xef4444
+    this.cityHpBar.fillStyle(0x1f2937, 1).fillRoundedRect(x, y, w, h, 4)
+    if (pct > 0) this.cityHpBar.fillStyle(color, 1).fillRoundedRect(x, y, Math.round(w * pct), h, 4)
+    this.cityHpBar.lineStyle(1, 0x374151, 1).strokeRoundedRect(x, y, w, h, 4)
   }
 
   private createSelector() {
     this.selHighlight = this.add.graphics()
 
     // Archer button
-    const aG = this.add.graphics()
-    aG.fillStyle(0x22c55e, 1).fillRect(0, 0, 22, 22)
-    aG.fillStyle(0x15803d, 1).fillTriangle(3, 19, 11, 3, 19, 19)
-    const aLabel = this.add.text(26, 3, 'Archer  50pts', { fontSize: '11px', color: '#86efac' })
-    this.archerBtn = this.add.container(GAME_W - 290, 10, [aG, aLabel])
-      .setInteractive(new Phaser.Geom.Rectangle(0, 0, 125, 22), Phaser.Geom.Rectangle.Contains)
+    const aBg = this.add.graphics()
+    aBg.fillStyle(0x14532d, 1).fillRoundedRect(0, 0, 128, 26, 5)
+    aBg.lineStyle(1, 0x22c55e, 0.5).strokeRoundedRect(0, 0, 128, 26, 5)
+    const aIcon  = this.add.text(6, 4, '🏹', { fontSize: '14px' })
+    const aLabel = this.add.text(26, 6, 'Archer  50pts', { fontSize: '11px', color: '#86efac' })
+    this.archerBtn = this.add.container(GAME_W - 290, 19, [aBg, aIcon, aLabel])
+      .setInteractive(new Phaser.Geom.Rectangle(0, 0, 128, 26), Phaser.Geom.Rectangle.Contains)
       .on('pointerdown', () => this.selectTower('archer'))
       .on('pointerover', () => this.input.setDefaultCursor('pointer'))
       .on('pointerout',  () => this.input.setDefaultCursor('default'))
 
     // Cannon button
-    const cG = this.add.graphics()
-    cG.fillStyle(0x3b82f6, 1).fillCircle(11, 11, 11)
-    cG.fillStyle(0x1d4ed8, 1).fillRect(7, 7, 8, 8)
-    const cLabel = this.add.text(26, 3, 'Cannon  120pts', { fontSize: '11px', color: '#93c5fd' })
-    this.cannonBtn = this.add.container(GAME_W - 148, 10, [cG, cLabel])
-      .setInteractive(new Phaser.Geom.Rectangle(0, 0, 135, 22), Phaser.Geom.Rectangle.Contains)
+    const cBg = this.add.graphics()
+    cBg.fillStyle(0x1e3a5f, 1).fillRoundedRect(0, 0, 138, 26, 5)
+    cBg.lineStyle(1, 0x3b82f6, 0.5).strokeRoundedRect(0, 0, 138, 26, 5)
+    const cIcon  = this.add.text(6, 4, '💣', { fontSize: '14px' })
+    const cLabel = this.add.text(26, 6, 'Cannon  120pts', { fontSize: '11px', color: '#93c5fd' })
+    this.cannonBtn = this.add.container(GAME_W - 148, 19, [cBg, cIcon, cLabel])
+      .setInteractive(new Phaser.Geom.Rectangle(0, 0, 138, 26), Phaser.Geom.Rectangle.Contains)
       .on('pointerdown', () => this.selectTower('cannon'))
       .on('pointerover', () => this.input.setDefaultCursor('pointer'))
       .on('pointerout',  () => this.input.setDefaultCursor('default'))
@@ -198,10 +257,12 @@ export class GameScene extends Phaser.Scene {
     this.selHighlight.clear()
     this.selHighlight.lineStyle(2, 0xf59e0b, 1)
     const btn = this.selected === 'archer' ? this.archerBtn : this.cannonBtn
-    this.selHighlight.strokeRect(btn.x - 4, btn.y - 4, 145, 32)
+    const w   = this.selected === 'archer' ? 128 : 138
+    this.selHighlight.strokeRoundedRect(btn.x - 3, btn.y - 3, w + 6, 32, 6)
   }
 
   // ── Input ──────────────────────────────────────────────────
+
   private setupInput() {
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.hoverCell.clear()
@@ -211,10 +272,9 @@ export class GameScene extends Phaser.Scene {
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return
       if (PATH_CELLS.has(`${col},${row}`)) return
       if (this.towers.find(t => t.col === col && t.row === row)) return
-      const def = TOWERS[this.selected]
-      const canAfford = this.points >= def.cost
-      this.hoverCell.fillStyle(canAfford ? 0xf59e0b : 0xef4444, 0.25)
-      this.hoverCell.fillRect(col * CELL + 1, UI_H + row * CELL + 1, CELL - 2, CELL - 2)
+      const canAfford = this.points >= TOWERS[this.selected].cost
+      this.hoverCell.fillStyle(canAfford ? 0xf59e0b : 0xef4444, 0.28)
+      this.hoverCell.fillRoundedRect(col * CELL + 2, UI_H + row * CELL + 2, CELL - 4, CELL - 4, 5)
     })
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
@@ -224,13 +284,13 @@ export class GameScene extends Phaser.Scene {
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return
       if (PATH_CELLS.has(`${col},${row}`)) return
       if (this.towers.find(t => t.col === col && t.row === row)) return
-      const def = TOWERS[this.selected]
-      if (this.points < def.cost) { this.flash('Not enough points!', '#ef4444'); return }
+      if (this.points < TOWERS[this.selected].cost) { this.flash('Not enough points!', '#ef4444'); return }
       this.placeTower(col, row, this.selected)
     })
   }
 
   // ── Tower placement ─────────────────────────────────────────
+
   private placeTower(col: number, row: number, type: TowerType) {
     const def = TOWERS[type]
     this.points -= def.cost
@@ -238,34 +298,65 @@ export class GameScene extends Phaser.Scene {
 
     const x = cx(col), y = cy(row)
     const g = this.add.graphics()
+    let barrel: Phaser.GameObjects.Graphics | undefined
+
     if (type === 'archer') {
-      g.fillStyle(def.color, 1).fillRect(-16, -16, 32, 32)
-      g.fillStyle(0x15803d, 1).fillTriangle(-9, 10, 0, -12, 9, 10)
+      // Base
+      g.fillStyle(0x475569, 1).fillRect(-20, -6, 40, 22)
+      // Tower body
+      g.fillStyle(0x334155, 1).fillRect(-14, -24, 28, 22)
+      // Crenellations
+      g.fillStyle(0x475569, 1)
+      g.fillRect(-14, -32, 8, 10)
+      g.fillRect(-3,  -32, 8, 10)
+      g.fillRect(7,   -32, 7, 10)
+      // Arrow slit
+      g.fillStyle(0x0f172a, 1).fillRect(-2, -20, 4, 10)
+      // Color accent stripe
+      g.fillStyle(0x22c55e, 0.9).fillRect(-14, -24, 28, 3)
+      // Embrasure shadow
+      g.fillStyle(0x000000, 0.2).fillRect(-14, -12, 28, 4)
     } else {
-      g.fillStyle(def.color, 1).fillCircle(0, 0, 17)
-      g.fillStyle(0x1d4ed8, 1).fillRect(-7, -7, 14, 14)
+      // Platform
+      g.fillStyle(0x374151, 1).fillCircle(0, 8, 18)
+      g.fillStyle(0x4b5563, 1).fillCircle(0, 5, 14)
+      // Body
+      g.fillStyle(0x1f2937, 1).fillRect(-10, -4, 20, 16)
+      // Blue accent
+      g.fillStyle(0x3b82f6, 0.8).fillCircle(0, 4, 5)
+      // Rotating barrel
+      barrel = this.add.graphics()
+      barrel.fillStyle(0x111827, 1).fillRect(2, -4, 22, 8)
+      barrel.fillStyle(0x374151, 1).fillCircle(0, 0, 8)
+      barrel.fillStyle(0x6b7280, 0.6).fillRect(20, -2, 4, 4)
     }
 
     const rc = this.add.graphics()
-    rc.lineStyle(1, def.color, 0.2).strokeCircle(0, 0, def.range * CELL)
+    rc.lineStyle(1, def.color, 0.18).strokeCircle(0, 0, def.range * CELL)
     rc.setVisible(false)
 
-    const container = this.add.container(x, y, [rc, g]).setDepth(1)
-      .setInteractive(new Phaser.Geom.Circle(0, 0, CELL / 2), Phaser.Geom.Circle.Contains)
-      .on('pointerover', () => rc.setVisible(true))
-      .on('pointerout',  () => rc.setVisible(false))
+    const children: Phaser.GameObjects.GameObject[] = [rc, g]
+    if (barrel) children.push(barrel)
 
-    this.towers.push({ col, row, type, container, rangeCircle: rc, lastFired: 0 })
+    const container = this.add.container(x, y, children).setDepth(2)
+      .setInteractive(new Phaser.Geom.Circle(0, 0, CELL / 2), Phaser.Geom.Circle.Contains)
+      .on('pointerover', () => { rc.setVisible(true); this.input.setDefaultCursor('pointer') })
+      .on('pointerout',  () => { rc.setVisible(false); this.input.setDefaultCursor('default') })
+
+    // Pop-in animation
+    container.setScale(0.1)
+    this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 200, ease: 'Back.easeOut' })
+
+    this.towers.push({ col, row, type, container, rangeCircle: rc, lastFired: 0, barrel })
   }
 
   // ── Wave spawning ───────────────────────────────────────────
+
   private startWave() {
     const delay = (1 / this.waveConfig.spawn_rate) * 1000
     this.time.addEvent({
-      delay,
-      repeat: this.waveConfig.enemy_count - 1,
-      callback: this.spawnEnemy,
-      callbackScope: this,
+      delay, repeat: this.waveConfig.enemy_count - 1,
+      callback: this.spawnEnemy, callbackScope: this,
     })
   }
 
@@ -274,17 +365,20 @@ export class GameScene extends Phaser.Scene {
     this.spawned++
     this.updateHUD()
 
-    const body = this.add.graphics()
-    body.fillStyle(0xef4444, 1).fillCircle(0, 0, 13)
-    body.fillStyle(0xb91c1c, 1).fillCircle(0, -3, 6)
+    const body = this.add.text(0, 2, '💸', { fontSize: '26px' }).setOrigin(0.5)
+    // Bobbing animation
+    this.tweens.add({ targets: body, y: -3, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
 
     const hpBg = this.add.graphics()
-    hpBg.fillStyle(0x374151, 1).fillRect(-15, -22, 30, 5)
+    hpBg.fillStyle(0x1f2937, 1).fillRoundedRect(-18, -30, 36, 7, 3)
+    hpBg.lineStyle(1, 0x374151, 1).strokeRoundedRect(-18, -30, 36, 7, 3)
 
     const hpFill = this.add.graphics()
-    hpFill.fillStyle(0x22c55e, 1).fillRect(-15, -22, 30, 5)
+    hpFill.fillStyle(0x22c55e, 1).fillRoundedRect(-18, -30, 36, 7, 3)
 
-    const container = this.add.container(cx(WAYPOINTS[0].col), cy(WAYPOINTS[0].row), [body, hpBg, hpFill]).setDepth(3)
+    const container = this.add.container(cx(WAYPOINTS[0].col), cy(WAYPOINTS[0].row), [body, hpBg, hpFill]).setDepth(4)
+    container.setScale(0)
+    this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 220, ease: 'Back.easeOut' })
 
     const enemy: EnemyObj = {
       container, hpFill,
@@ -298,12 +392,10 @@ export class GameScene extends Phaser.Scene {
   private moveEnemy(enemy: EnemyObj) {
     if (!enemy.alive) return
     if (enemy.wpIdx >= WAYPOINTS.length) { this.enemyExit(enemy); return }
-
     const wp = WAYPOINTS[enemy.wpIdx]
     const tx = cx(wp.col), ty = cy(wp.row)
     const dist = Phaser.Math.Distance.Between(enemy.container.x, enemy.container.y, tx, ty)
     const duration = (dist / (CELL * this.waveConfig.enemy_speed)) * 1000
-
     this.tweens.add({
       targets: enemy.container, x: tx, y: ty, duration, ease: 'Linear',
       onComplete: () => { if (!enemy.alive) return; enemy.wpIdx++; this.moveEnemy(enemy) },
@@ -313,6 +405,7 @@ export class GameScene extends Phaser.Scene {
   private enemyExit(enemy: EnemyObj) {
     if (!enemy.alive) return
     enemy.alive = false
+    this.cameras.main.shake(180, 0.012)
     enemy.container.destroy()
     this.cityHealth = Math.max(0, this.cityHealth - 20)
     this.resolved++
@@ -328,13 +421,18 @@ export class GameScene extends Phaser.Scene {
     const pct = enemy.hp / enemy.maxHp
     enemy.hpFill.clear()
     const color = pct > 0.5 ? 0x22c55e : pct > 0.25 ? 0xf59e0b : 0xef4444
-    enemy.hpFill.fillStyle(color, 1).fillRect(-15, -22, Math.round(30 * pct), 5)
+    enemy.hpFill.fillStyle(color, 1).fillRoundedRect(-18, -30, Math.round(36 * pct), 7, 3)
+
+    // Hit flash
+    enemy.container.setAlpha(0.55)
+    this.time.delayedCall(90, () => { if (enemy.alive) enemy.container.setAlpha(1) })
 
     if (enemy.hp <= 0) {
       enemy.alive = false
       this.tweens.killTweensOf(enemy.container)
+      this.spawnDeathParticles(enemy.container.x, enemy.container.y)
       this.tweens.add({
-        targets: enemy.container, alpha: 0, scaleX: 1.5, scaleY: 1.5, duration: 180,
+        targets: enemy.container, alpha: 0, scaleX: 1.9, scaleY: 1.9, duration: 240, ease: 'Power2',
         onComplete: () => enemy.container.destroy(),
       })
       this.points += 10
@@ -344,23 +442,53 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private spawnDeathParticles(x: number, y: number) {
+    const colors = [0xfbbf24, 0xf59e0b, 0x22c55e, 0xffffff, 0xfcd34d]
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.4
+      const dist  = Phaser.Math.Between(15, 48)
+      const p = this.add.circle(x, y, Phaser.Math.Between(2, 5), colors[i % colors.length]).setDepth(10)
+      this.tweens.add({
+        targets: p,
+        x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
+        alpha: 0, scaleX: 0, scaleY: 0,
+        duration: Phaser.Math.Between(280, 580), ease: 'Power2',
+        onComplete: () => p.destroy(),
+      })
+    }
+    const coin = this.add.text(x, y - 8, '+💰', { fontSize: '15px' }).setOrigin(0.5).setDepth(11)
+    this.tweens.add({ targets: coin, y: y - 42, alpha: 0, duration: 750, ease: 'Power2', onComplete: () => coin.destroy() })
+  }
+
   private checkWaveDone() {
     if (this.over) return
     if (this.resolved >= this.waveConfig.enemy_count) this.endGame(this.cityHealth > 0)
   }
 
-  // ── Update (tower firing) ───────────────────────────────────
+  // ── Update ─────────────────────────────────────────────────
+
   update(time: number) {
     if (this.over) return
 
     for (const tower of this.towers) {
+      // Cannon barrel tracks nearest enemy
+      if (tower.type === 'cannon' && tower.barrel) {
+        const tx = cx(tower.col), ty = cy(tower.row)
+        let nearest: EnemyObj | null = null, nearestDist = Infinity
+        for (const e of this.enemies) {
+          if (!e.alive) continue
+          const d = Phaser.Math.Distance.Between(tx, ty, e.container.x, e.container.y)
+          if (d < nearestDist) { nearest = e; nearestDist = d }
+        }
+        if (nearest) tower.barrel.setRotation(Phaser.Math.Angle.Between(tx, ty, nearest.container.x, nearest.container.y))
+      }
+
       const def = TOWERS[tower.type]
       if (time - tower.lastFired < def.fireRate) continue
 
       const tx = cx(tower.col), ty = cy(tower.row)
       const rangePx = def.range * CELL
-      let target: EnemyObj | null = null
-      let best = Infinity
+      let target: EnemyObj | null = null, best = Infinity
 
       for (const e of this.enemies) {
         if (!e.alive) continue
@@ -368,33 +496,47 @@ export class GameScene extends Phaser.Scene {
         if (d <= rangePx && d < best) { target = e; best = d }
       }
 
-      if (target) {
-        tower.lastFired = time
-        this.shoot(tower, target)
-      }
+      if (target) { tower.lastFired = time; this.shoot(tower, target) }
     }
   }
 
   private shoot(tower: TowerObj, enemy: EnemyObj) {
     const def = TOWERS[tower.type]
-    const proj = this.add.circle(cx(tower.col), cy(tower.row), tower.type === 'cannon' ? 7 : 4, def.color).setDepth(4)
+    const startX = cx(tower.col), startY = cy(tower.row)
+
+    const proj = this.add.graphics().setDepth(5)
+    if (tower.type === 'archer') {
+      proj.fillStyle(0xfbbf24, 1).fillTriangle(0, -5, 4, 5, -4, 5)
+    } else {
+      proj.fillStyle(0x1f2937, 1).fillCircle(0, 0, 7)
+      proj.fillStyle(0x4b5563, 1).fillCircle(-2, -2, 3)
+    }
+    proj.x = startX; proj.y = startY
 
     this.tweens.add({
-      targets: proj,
-      x: enemy.container.x, y: enemy.container.y,
-      duration: 140, ease: 'Linear',
+      targets: proj, x: enemy.container.x, y: enemy.container.y,
+      duration: 150, ease: 'Linear',
       onComplete: () => {
         proj.destroy()
         if (!enemy.alive) return
+
+        // Muzzle flash
+        const flash = this.add.circle(startX, startY, 14, 0xffffff, 0.65).setDepth(5)
+        this.tweens.add({ targets: flash, alpha: 0, scale: 0.2, duration: 180, onComplete: () => flash.destroy() })
+
         this.damageEnemy(enemy, def.damage)
-        // Cannon splash
+
         if (tower.type === 'cannon') {
-          const splash = this.add.circle(enemy.container.x, enemy.container.y, 32, 0x3b82f6, 0.25).setDepth(4)
-          this.time.delayedCall(220, () => splash.destroy())
+          // Expanding ring
+          const ring = this.add.graphics().setDepth(5)
+          ring.lineStyle(3, 0x3b82f6, 0.85)
+          ring.strokeCircle(enemy.container.x, enemy.container.y, 10)
+          this.tweens.add({ targets: ring, scaleX: 3.8, scaleY: 3.8, alpha: 0, duration: 360, onComplete: () => ring.destroy() })
+
           for (const e of this.enemies) {
             if (!e.alive || e === enemy) continue
-            const d = Phaser.Math.Distance.Between(e.container.x, e.container.y, enemy.container.x, enemy.container.y)
-            if (d < 32) this.damageEnemy(e, Math.floor(def.damage * 0.5))
+            if (Phaser.Math.Distance.Between(e.container.x, e.container.y, enemy.container.x, enemy.container.y) < 32)
+              this.damageEnemy(e, Math.floor(def.damage * 0.5))
           }
         }
       },
@@ -402,26 +544,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Game over ───────────────────────────────────────────────
+
   private endGame(won: boolean) {
     if (this.over) return
     this.over = true
     this.msgText.setText(won ? '🏰 FORTRESS HELD!' : '💀 FORTRESS FELL!').setColor(won ? '#22c55e' : '#ef4444')
+    this.cameras.main.flash(600, won ? 0 : 80, won ? 80 : 0, 0, false)
     window.dispatchEvent(new CustomEvent('fortifyfi:gameover', {
       detail: { won, points: this.points, cityHealth: this.cityHealth },
     }))
   }
 
   // ── Helpers ─────────────────────────────────────────────────
+
   private updateHUD() {
-    this.ptText.setText(`Points: ${this.points}`)
-    this.hpText.setText(`City HP: ${this.cityHealth}`)
-    this.wvText.setText(`Enemies: ${this.spawned}/${this.waveConfig.enemy_count}`)
+    this.ptText.setText(`${this.points} pts`)
+    this.hpText.setText(`${this.cityHealth} HP`)
+    this.wvText.setText(`${this.spawned}/${this.waveConfig.enemy_count}`)
+    this.drawCityHpBar()
   }
 
   private flash(msg: string, color: string) {
-    const t = this.add.text(GAME_W / 2, UI_H + 50, msg, {
+    const t = this.add.text(GAME_W / 2, UI_H + 60, msg, {
       fontSize: '16px', color, fontStyle: 'bold', stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(15)
-    this.tweens.add({ targets: t, alpha: 0, y: UI_H + 30, duration: 1400, onComplete: () => t.destroy() })
+    this.tweens.add({ targets: t, alpha: 0, y: UI_H + 38, duration: 1400, onComplete: () => t.destroy() })
   }
 }
