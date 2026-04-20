@@ -52,13 +52,18 @@ export async function POST(req: NextRequest) {
     const weekNumber = gameState?.week_number ?? 1
     const nextWeek = calendarWeekTurned ? weekNumber + 1 : weekNumber
 
-    // Always create a fresh goal with the new targeted label after each sync
-    const cats = financialProfile.categories
+    // Compute category totals from the saved transactions (accurate, not LLM estimates)
+    const { data: savedTxns } = await db.from('transactions').select('category, amount').eq('user_id', userId)
+    const catTotals: Record<string, number> = {}
+    savedTxns?.forEach(t => {
+      if (t.category) catTotals[t.category] = (catTotals[t.category] ?? 0) + Number(t.amount)
+    })
+
     const categoryLabels: Record<string, string> = {
       food: 'food', subscriptions: 'subscriptions', shopping: 'shopping',
       transport: 'transport', entertainment: 'entertainment', utilities: 'utilities', other: 'other spending',
     }
-    const [topCat, topAmt] = Object.entries(cats).sort(([, a], [, b]) => b - a)[0] ?? ['other', 0]
+    const [topCat, topAmt] = Object.entries(catTotals).sort(([, a], [, b]) => b - a)[0] ?? ['other', 0]
     const targetAmt = Math.round(topAmt * 0.8)
     const newGoalLabel = `Reduce ${categoryLabels[topCat] ?? topCat} spend from $${Math.round(topAmt)} → $${targetAmt}`
 
