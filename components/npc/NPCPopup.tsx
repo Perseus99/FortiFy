@@ -8,6 +8,7 @@ interface Props {
   npcType: NPCType
   userId: string
   onClose: () => void
+  gameResult?: { won: boolean; points: number; cityHealth: number }
 }
 
 const NPC_CONFIG = {
@@ -31,7 +32,7 @@ const NPC_CONFIG = {
   },
 }
 
-export default function NPCPopup({ npcType, userId, onClose }: Props) {
+export default function NPCPopup({ npcType, userId, onClose, gameResult }: Props) {
   const config = NPC_CONFIG[npcType]
   const [messages, setMessages]   = useState<NPCMessage[]>([])
   const [input, setInput]         = useState('')
@@ -61,12 +62,19 @@ export default function NPCPopup({ npcType, userId, onClose }: Props) {
     const token = session?.access_token
     if (!token) { setLoading(false); return }
 
-    // Opening prompt if first message
-    const payload = userText === null
-      ? [{ role: 'user' as const, content: npcType === 'warden'
-          ? 'Give me your assessment of my finances this week.'
-          : 'What have you found in my spending this week?' }]
-      : newMessages
+    // Opening prompt — include game result if triggered post-game
+    let openingPrompt: string
+    if (npcType === 'warden') {
+      openingPrompt = gameResult
+        ? `My fortress just ${gameResult.won ? 'held' : 'fell'}! I ended with ${gameResult.points} points and ${gameResult.cityHealth} city HP. Give me your full assessment.`
+        : 'Give me your assessment of my finances this week.'
+    } else {
+      openingPrompt = gameResult
+        ? `My fortress just ${gameResult.won ? 'held' : 'fell'} with ${gameResult.cityHealth} city HP remaining. What did you find in my spending this week?`
+        : 'What have you found in my spending this week?'
+    }
+
+    const payload = userText === null ? [{ role: 'user' as const, content: openingPrompt }] : newMessages
 
     const res = await fetch('/api/npc', {
       method: 'POST',
@@ -75,10 +83,11 @@ export default function NPCPopup({ npcType, userId, onClose }: Props) {
     })
 
     if (res.ok) {
-      const { reply } = await res.json()
+      // Minimum 1.2s typing delay so NPC feels alive
+      const [data] = await Promise.all([res.json(), new Promise(r => setTimeout(r, 1200))])
       setMessages(prev => [
         ...(userText ? prev : []),
-        { role: 'assistant', content: reply },
+        { role: 'assistant', content: data.reply },
       ])
     }
 

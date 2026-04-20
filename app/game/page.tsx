@@ -69,7 +69,7 @@ export default function GamePage() {
   return (
     <div className="bg-gray-950 flex flex-col items-center py-6 px-4 pb-12">
       {activeNPC && userId && (
-        <NPCPopup npcType={activeNPC} userId={userId} onClose={() => setActiveNPC(null)} />
+        <NPCPopup npcType={activeNPC} userId={userId} onClose={() => setActiveNPC(null)} gameResult={result ?? undefined} />
       )}
       <div className="w-full max-w-5xl">
 

@@ -353,10 +353,32 @@ export class GameScene extends Phaser.Scene {
   // ── Wave spawning ───────────────────────────────────────────
 
   private startWave() {
-    const delay = (1 / this.waveConfig.spawn_rate) * 1000
-    this.time.addEvent({
-      delay, repeat: this.waveConfig.enemy_count - 1,
-      callback: this.spawnEnemy, callbackScope: this,
+    this.showCountdown(3)
+  }
+
+  private showCountdown(n: number) {
+    if (n <= 0) {
+      const go = this.add.text(GAME_W / 2, UI_H + (ROWS * CELL) / 2, '⚔️  DEFEND!', {
+        fontSize: '52px', color: '#22c55e', fontStyle: 'bold', stroke: '#000000', strokeThickness: 7,
+      }).setOrigin(0.5).setDepth(25)
+      this.tweens.add({
+        targets: go, alpha: 0, scaleX: 1.6, scaleY: 1.6,
+        duration: 900, delay: 400, ease: 'Power2',
+        onComplete: () => go.destroy(),
+      })
+      const delay = (1 / this.waveConfig.spawn_rate) * 1000
+      this.time.addEvent({ delay, repeat: this.waveConfig.enemy_count - 1, callback: this.spawnEnemy, callbackScope: this })
+      return
+    }
+    const txt = this.add.text(GAME_W / 2, UI_H + (ROWS * CELL) / 2, String(n), {
+      fontSize: '100px', color: '#f59e0b', fontStyle: 'bold', stroke: '#000000', strokeThickness: 10,
+    }).setOrigin(0.5).setDepth(25).setScale(0.3).setAlpha(0)
+    this.tweens.add({
+      targets: txt, alpha: 1, scaleX: 1, scaleY: 1, duration: 250, ease: 'Back.easeOut',
+      onComplete: () => this.tweens.add({
+        targets: txt, alpha: 0, scaleX: 1.6, scaleY: 1.6, duration: 500, delay: 280, ease: 'Power2',
+        onComplete: () => { txt.destroy(); this.showCountdown(n - 1) },
+      }),
     })
   }
 
@@ -427,6 +449,11 @@ export class GameScene extends Phaser.Scene {
     enemy.container.setAlpha(0.55)
     this.time.delayedCall(90, () => { if (enemy.alive) enemy.container.setAlpha(1) })
 
+    // Danger scaling — enemy grows when low HP
+    if (pct <= 0.25 && enemy.alive) {
+      this.tweens.add({ targets: enemy.container, scaleX: 1.25, scaleY: 1.25, duration: 150, ease: 'Power2' })
+    }
+
     if (enemy.hp <= 0) {
       enemy.alive = false
       this.tweens.killTweensOf(enemy.container)
@@ -496,7 +523,12 @@ export class GameScene extends Phaser.Scene {
         if (d <= rangePx && d < best) { target = e; best = d }
       }
 
-      if (target) { tower.lastFired = time; this.shoot(tower, target) }
+      if (target) {
+      tower.lastFired = time
+      // Tower fire pulse
+      this.tweens.add({ targets: tower.container, scaleX: 1.12, scaleY: 1.12, duration: 80, yoyo: true, ease: 'Power2' })
+      this.shoot(tower, target)
+    }
     }
   }
 

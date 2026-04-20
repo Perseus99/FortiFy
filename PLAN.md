@@ -230,15 +230,15 @@ wave_config     — user_id, week_number, enemy_count, enemy_speed, enemy_hp, sp
   2. Analyst Agent runs → score to Supabase
   3. Game Engine Agent → wave config to Supabase
   4. Game session unlocked for user
-- [ ] End-of-game handler: saves result, updates points + city health, triggers NPC
-- [ ] Manual trigger button for now (cron = v2)
+- [x] End-of-game handler: saves result, updates points + city health, triggers NPC
+- [x] Manual trigger button for now (cron = v2)
 
 ---
 
 ### Block 10 — Deploy (~1 hr)
 - [x] Push to GitHub
-- [ ] Vercel deploy + add all env vars in Vercel dashboard
-- [ ] Smoke test production build
+- [x] Vercel deploy + add all env vars in Vercel dashboard
+- [x] Smoke test production build
 
 ---
 

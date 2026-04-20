@@ -176,7 +176,20 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
             <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Week Score</p>
-            <p className="text-3xl font-bold text-green-400">{goal?.score ?? '—'}</p>
+            {goal?.score != null ? (
+              <div className="flex items-center gap-2">
+                <p className="text-3xl font-bold text-green-400">{goal.score}</p>
+                <span className={`text-sm font-bold px-2 py-0.5 rounded ${
+                  goal.score >= 90 ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500' :
+                  goal.score >= 75 ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500' :
+                  goal.score >= 60 ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500' :
+                  goal.score >= 45 ? 'bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500' :
+                                     'bg-red-500/20 text-red-400 ring-1 ring-red-500'
+                }`}>
+                  {goal.score >= 90 ? 'S' : goal.score >= 75 ? 'A' : goal.score >= 60 ? 'B' : goal.score >= 45 ? 'C' : 'D'}
+                </span>
+              </div>
+            ) : <p className="text-3xl font-bold text-green-400">—</p>}
           </div>
         </div>
 
@@ -240,6 +253,32 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Spending category breakdown */}
+        {transactions.length > 0 && (() => {
+          const cats: Record<string, number> = {}
+          transactions.forEach(t => { if (t.category) cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
+          const sorted = Object.entries(cats).sort(([,a],[,b]) => b - a).slice(0, 5)
+          const max = sorted[0]?.[1] ?? 1
+          const icons: Record<string, string> = { food:'🍔', subscriptions:'📱', shopping:'🛍️', transport:'🚗', entertainment:'🎬', utilities:'⚡', other:'📦' }
+          return (
+            <div className="bg-gray-900 rounded-lg p-5 border border-gray-800">
+              <h2 className="text-white font-semibold mb-3">Spending Breakdown</h2>
+              <div className="space-y-2">
+                {sorted.map(([cat, amt]) => (
+                  <div key={cat} className="flex items-center gap-3">
+                    <span className="text-sm w-4">{icons[cat] ?? '📦'}</span>
+                    <span className="text-gray-400 text-xs w-24 capitalize">{cat}</span>
+                    <div className="flex-1 bg-gray-800 rounded-full h-2">
+                      <div className="h-2 rounded-full bg-amber-500 transition-all" style={{ width: `${(amt / max) * 100}%` }} />
+                    </div>
+                    <span className="text-gray-300 text-xs w-16 text-right">${amt.toFixed(0)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Play + Sync buttons */}
         <div className="flex gap-4">
