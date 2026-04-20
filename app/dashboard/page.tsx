@@ -38,7 +38,7 @@ export default function DashboardPage() {
         supabase.from('transactions').select('*').eq('user_id', user.id)
           .order('transaction_date', { ascending: false }).limit(20),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id)
-          .order('week_start_date', { ascending: false }).limit(8),
+          .order('week_start_date', { ascending: false }).limit(4),
       ])
 
       if (!profile?.nessie_account_id) setNeedsSetup(true)
@@ -163,6 +163,20 @@ export default function DashboardPage() {
   const overBudget = goal ? categorySpend > goal.goal_amount : false
   const hasSubscriptions = transactions.some(t => t.category === 'subscriptions')
   const hasFlagged     = transactions.some(t => t.flagged)
+
+  // Midweek projection
+  const weekStart    = goal?.week_start_date ? new Date(goal.week_start_date) : null
+  const daysElapsed  = weekStart ? Math.max(0.5, (Date.now() - weekStart.getTime()) / 86_400_000) : 3.5
+  const weekFraction = Math.min(daysElapsed / 7, 1)
+  const projectedSpend = (goal && weekFraction > 0.05) ? categorySpend / weekFraction : categorySpend
+  const projectedPct   = goal ? Math.min((projectedSpend / goal.goal_amount) * 100, 140) : 0
+  const showProjection = weekFraction < 0.95
+  const trackingDays   = weekStart ? Math.max(1, Math.ceil(daysElapsed)) : null
+  const trackingSince  = weekStart ? weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null
+
+  // Which reward tier is the projection currently heading for?
+  const projRatio   = goal ? projectedSpend / goal.goal_amount : 1
+  const incentiveTier = projRatio <= 0.8 ? 'crush' : projRatio <= 1.0 ? 'hit' : projRatio <= 1.2 ? 'close' : projRatio < 1.5 ? 'miss' : 'bad'
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -311,32 +325,89 @@ export default function DashboardPage() {
 
         {/* Weekly goal */}
         {goal && (
-          <div className="bg-gray-900 rounded-lg p-5 border border-gray-800">
-            <div className="flex justify-between items-center mb-1">
+          <div className="bg-gray-900 rounded-lg p-5 border border-gray-800 space-y-3">
+
+            {/* Header */}
+            <div className="flex justify-between items-center">
               <h2 className="text-white font-semibold">This Week's Goal</h2>
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${overBudget ? 'bg-red-900/50 text-red-400' : 'bg-green-900/50 text-green-400'}`}>
                 {overBudget ? 'Over target' : 'On track'}
               </span>
             </div>
-            {goal.goal_label && (
-              <p className="text-amber-400 text-sm mb-3">{goal.goal_label}</p>
+
+            {/* Label + tracking since */}
+            {goal.goal_label && <p className="text-amber-400 text-sm">{goal.goal_label}</p>}
+            {trackingSince && (
+              <p className="text-gray-600 text-xs">Tracking since {trackingSince} · Day {trackingDays} of 7</p>
             )}
-            <div className="w-full bg-gray-800 rounded-full h-3 mb-2">
-              <div
-                className={`h-3 rounded-full transition-all ${spentPct > 100 ? 'bg-red-500' : spentPct > 80 ? 'bg-amber-500' : 'bg-green-500'}`}
-                style={{ width: `${Math.min(spentPct, 100)}%` }}
-              />
+
+            {/* Progress bar with projected marker */}
+            <div>
+              <div className="relative w-full bg-gray-800 rounded-full h-3 mb-2">
+                <div
+                  className={`h-3 rounded-full transition-all ${spentPct > 100 ? 'bg-red-500' : spentPct > 80 ? 'bg-amber-500' : 'bg-green-500'}`}
+                  style={{ width: `${Math.min(spentPct, 100)}%` }}
+                />
+                {showProjection && (
+                  <div
+                    className={`absolute top-0 h-3 w-0.5 rounded-full ${projectedPct > 100 ? 'bg-red-400' : 'bg-amber-300'} opacity-80`}
+                    style={{ left: `${Math.min(projectedPct, 99.5)}%` }}
+                    title={`Projected end-of-week: $${projectedSpend.toFixed(0)}`}
+                  />
+                )}
+              </div>
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Spent: <span className="text-white">${categorySpend.toFixed(0)}</span></span>
+                {showProjection && (
+                  <span className={projectedSpend > goal.goal_amount ? 'text-red-400' : 'text-gray-500'}>
+                    Projected: ${projectedSpend.toFixed(0)}
+                  </span>
+                )}
+                <span className={overBudget ? 'text-red-400' : 'text-gray-400'}>
+                  {overBudget
+                    ? `$${(categorySpend - goal.goal_amount).toFixed(0)} over`
+                    : `$${(goal.goal_amount - categorySpend).toFixed(0)} left`}
+                  {' / $'}{goal.goal_amount.toFixed(0)} target
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between text-sm text-gray-400">
-              <span>Spent: ${categorySpend.toFixed(0)}</span>
-              <span className={overBudget ? 'text-red-400' : 'text-gray-400'}>
-                {overBudget
-                  ? `$${(categorySpend - goal.goal_amount).toFixed(0)} over target`
-                  : `$${(goal.goal_amount - categorySpend).toFixed(0)} left to hit goal`}
-              </span>
+
+            {/* Incentive tiers */}
+            <div className="bg-gray-800/60 rounded-lg p-3 border border-gray-700/50">
+              <p className="text-gray-500 text-xs uppercase tracking-wide mb-2">Goal Rewards</p>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className={`rounded p-2 ${incentiveTier === 'crush' ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-gray-800'}`}>
+                  <p className="text-amber-400 font-medium">Crush it</p>
+                  <p className="text-gray-500 text-xs">Under 80%</p>
+                  <p className="text-gray-300 mt-1">+75 pts · +10 HP</p>
+                </div>
+                <div className={`rounded p-2 ${incentiveTier === 'hit' ? 'bg-green-500/20 border border-green-500/40' : 'bg-gray-800'}`}>
+                  <p className="text-green-400 font-medium">Hit target</p>
+                  <p className="text-gray-500 text-xs">Under 100%</p>
+                  <p className="text-gray-300 mt-1">+50 pts · +5 HP</p>
+                </div>
+                <div className={`rounded p-2 ${incentiveTier === 'miss' || incentiveTier === 'bad' ? 'bg-red-500/20 border border-red-500/40' : 'bg-gray-800'}`}>
+                  <p className="text-red-400 font-medium">Miss it</p>
+                  <p className="text-gray-500 text-xs">Over 120%</p>
+                  <p className="text-gray-300 mt-1">−10 to −20 HP</p>
+                </div>
+              </div>
+              {incentiveTier !== 'close' && (
+                <p className={`text-xs mt-2 font-medium ${
+                  incentiveTier === 'crush' ? 'text-amber-400' :
+                  incentiveTier === 'hit'   ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {incentiveTier === 'crush' ? '🎯 On track for Crush it — keep going' :
+                   incentiveTier === 'hit'   ? '✓ On track to hit target' :
+                   incentiveTier === 'bad'   ? '⚠ Significant miss projected — cut back now' :
+                                               '⚠ Slight miss projected'}
+                </p>
+              )}
             </div>
+
+            {/* Dismiss */}
             {goal.goal_category && (
-              <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between">
+              <div className="pt-1 border-t border-gray-800 flex items-center justify-between">
                 <p className="text-gray-500 text-xs">This spend is intentional?</p>
                 <button
                   onClick={handleDismissGoal}
