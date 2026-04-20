@@ -27,7 +27,7 @@ Current financial intel:
 - Financial score: ${ctx.score}/100
 - Top spending: ${Object.entries(ctx.categories).sort(([,a],[,b]) => b-a).slice(0,3).map(([k,v]) => `${k}: $${v}`).join(', ')}
 
-Keep responses under 80 words. Be direct. Reference their actual numbers.`,
+Keep responses under 80 words. Be direct. Reference their actual numbers. Plain text only — no markdown, no asterisks, no bold formatting.`,
 
   scout: (ctx) => `You are The Scout — a sharp-eyed investigator in a tower defense game called FortifyFi.
 Your personality: curious, precise, a little conspiratorial. You've been watching the user's spending patterns and found things worth reporting.
@@ -40,7 +40,7 @@ Intel gathered:
 - Subscription spending: $${ctx.categories['subscriptions'] ?? 0}
 - Weekly score: ${ctx.score}/100
 
-Keep responses under 80 words. Reference specific transactions by name. Be investigative and specific.`,
+Keep responses under 80 words. Reference specific transactions by name. Be investigative and specific. Plain text only — no markdown, no asterisks, no bold formatting.`,
 }
 
 function ruleBasedReply(npcType: NPCType, ctx: NPCContext): string {
