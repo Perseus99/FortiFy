@@ -1,16 +1,32 @@
-import { Ollama } from 'ollama'
+import Anthropic from '@anthropic-ai/sdk'
 
-export const ollama = new Ollama({ host: process.env.OLLAMA_BASE_URL || 'http://localhost:11434' })
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001'
 
-export const MODEL = process.env.OLLAMA_MODEL || 'qwen:7b'
-
+// Single-turn: used by analyst agent
 export async function chat(systemPrompt: string, userMessage: string): Promise<string> {
-  const response = await ollama.chat({
+  const msg = await client.messages.create({
     model: MODEL,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
-    ],
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
   })
-  return response.message.content
+  return (msg.content[0] as { text: string }).text
+}
+
+// Multi-turn: used by NPC agent
+export async function chatWithHistory(
+  systemPrompt: string,
+  messages: { role: string; content: string }[]
+): Promise<string> {
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 512,
+    system: systemPrompt,
+    messages: messages.map(m => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content,
+    })) as Anthropic.MessageParam[],
+  })
+  return (msg.content[0] as { text: string }).text
 }

@@ -1,4 +1,4 @@
-import { ollama, MODEL } from '@/lib/ollama'
+import { chatWithHistory } from '@/lib/ollama'
 
 export type NPCType = 'warden' | 'scout'
 
@@ -43,20 +43,31 @@ Intel gathered:
 Keep responses under 80 words. Reference specific transactions by name. Be investigative and specific.`,
 }
 
+function ruleBasedReply(npcType: NPCType, ctx: NPCContext): string {
+  if (npcType === 'warden') {
+    const over = ctx.totalSpent > ctx.goalAmount
+    const diff = Math.abs(ctx.totalSpent - ctx.goalAmount).toFixed(2)
+    const top = Object.entries(ctx.categories).sort(([,a],[,b]) => b-a)[0]
+    if (over) return `Fortress breached. You spent $${diff} over your $${ctx.goalAmount} goal. Score: ${ctx.score}/100. Your biggest liability: ${top?.[0] ?? 'unknown'} at $${top?.[1] ?? 0}. Tighten the perimeter.`
+    return `Holding the line. Under budget by $${diff}. Score: ${ctx.score}/100. Top spend: ${top?.[0] ?? 'unknown'}. Stay disciplined — the next wave won't be easier.`
+  }
+  const flagCount = ctx.flaggedTransactions.length
+  if (flagCount > 0) {
+    const first = ctx.flaggedTransactions[0]
+    return `Scout reporting. Found ${flagCount} suspicious transaction${flagCount > 1 ? 's' : ''}. Primary target: ${first.merchant} — ${first.flag_reason ?? 'unusual activity'}. Recommend review before next engagement.`
+  }
+  return `Scout reporting. No flagged transactions this week. Subscription spending: $${ctx.categories['subscriptions'] ?? 0}. Weekly score: ${ctx.score}/100. Perimeter looks clean.`
+}
+
 export async function runNPCAgent(
   npcType: NPCType,
   messages: NPCMessage[],
   context: NPCContext
 ): Promise<string> {
   const systemPrompt = SYSTEM_PROMPTS[npcType](context)
-
-  const response = await ollama.chat({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...messages,
-    ],
-  })
-
-  return response.message.content
+  try {
+    return await chatWithHistory(systemPrompt, messages)
+  } catch {
+    return ruleBasedReply(npcType, context)
+  }
 }

@@ -14,6 +14,37 @@ Response format:
   "flagged": [{ "merchant": "...", "reason": "..." }]
 }`
 
+function keywordCategory(merchant: string): SpendingCategory {
+  const m = merchant.toLowerCase()
+  if (/netflix|spotify|hulu|disney|prime|subscription|patreon/.test(m)) return 'subscriptions'
+  if (/restaurant|cafe|pizza|burger|sushi|food|doordash|grubhub|ubereats|starbucks|chipotle|mcdonald/.test(m)) return 'food'
+  if (/amazon|walmart|target|ebay|etsy|shop|store|market/.test(m)) return 'shopping'
+  if (/uber|lyft|metro|transit|gas|shell|chevron|bp|parking/.test(m)) return 'transport'
+  if (/movie|cinema|steam|game|ticket|concert|entertainment/.test(m)) return 'entertainment'
+  if (/electric|water|internet|phone|att|verizon|utility|bill/.test(m)) return 'utilities'
+  return 'other'
+}
+
+function ruleBasedCategorize(purchases: any[]): {
+  categories: Record<SpendingCategory, number>
+  flagged: { merchant: string; reason: string }[]
+} {
+  const categories: Record<SpendingCategory, number> = {
+    food: 0, subscriptions: 0, shopping: 0, transport: 0, entertainment: 0, utilities: 0, other: 0,
+  }
+  const flagged: { merchant: string; reason: string }[] = []
+
+  for (const p of purchases) {
+    const name = p.description || p.merchant_id || 'Unknown'
+    const cat = keywordCategory(name)
+    categories[cat] = (categories[cat] ?? 0) + p.amount
+    if (cat === 'subscriptions') flagged.push({ merchant: name, reason: 'Recurring subscription charge' })
+    else if (p.amount > 200) flagged.push({ merchant: name, reason: 'Unusually large purchase' })
+  }
+
+  return { categories, flagged }
+}
+
 function calculateScore(totalSpent: number, totalIncome: number, goalAmount: number): number {
   if (totalIncome === 0) return 50
   const savingsRate = (totalIncome - totalSpent) / totalIncome
@@ -44,20 +75,16 @@ export async function runAnalystAgent(
     .map((p: any) => `${p.description || p.merchant_id}: $${p.amount} on ${p.purchase_date}`)
     .join('\n')
 
-  const llmResponse = await chat(
-    SYSTEM_PROMPT,
-    `Analyze these transactions and return JSON:\n${transactionList}`
-  )
-
   let parsed: { categories: Record<SpendingCategory, number>; flagged: { merchant: string; reason: string }[] }
   try {
+    const llmResponse = await chat(
+      SYSTEM_PROMPT,
+      `Analyze these transactions and return JSON:\n${transactionList}`
+    )
     const jsonMatch = llmResponse.match(/\{[\s\S]*\}/)
-    parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { categories: {}, flagged: [] }
+    parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : ruleBasedCategorize(recentPurchases)
   } catch {
-    parsed = {
-      categories: { food: 0, subscriptions: 0, shopping: 0, transport: 0, entertainment: 0, utilities: 0, other: totalSpent },
-      flagged: [],
-    }
+    parsed = ruleBasedCategorize(recentPurchases)
   }
 
   const score = calculateScore(totalSpent, totalIncome, goalAmount)

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { WaveConfig } from '@/lib/types'
 import type { GameInitData } from '@/components/game/GameScene'
+import NPCPopup from '@/components/npc/NPCPopup'
+import type { NPCType } from '@/agents/npc'
 
 const GameCanvas = dynamic(() => import('@/components/game/GameCanvas'), { ssr: false })
 
@@ -21,6 +23,7 @@ export default function GamePage() {
   const [userId, setUserId]       = useState<string | null>(null)
   const [loading, setLoading]     = useState(true)
   const [result, setResult]       = useState<{ won: boolean; points: number; cityHealth: number } | null>(null)
+  const [activeNPC, setActiveNPC] = useState<NPCType | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -51,6 +54,8 @@ export default function GamePage() {
       { user_id: userId, points: res.points, city_health: res.cityHealth },
       { onConflict: 'user_id' }
     )
+    // Trigger NPC: Warden on loss or close call, Scout on clean win
+    setActiveNPC(!res.won || res.cityHealth < 50 ? 'warden' : 'scout')
   }
 
   if (loading) return (
@@ -63,6 +68,9 @@ export default function GamePage() {
 
   return (
     <div className="bg-gray-950 flex flex-col items-center py-6 px-4 pb-12">
+      {activeNPC && userId && (
+        <NPCPopup npcType={activeNPC} userId={userId} onClose={() => setActiveNPC(null)} />
+      )}
       <div className="w-full max-w-5xl">
 
         {/* Header */}
