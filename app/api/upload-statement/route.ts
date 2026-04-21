@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chat, chatWithPDF } from '@/lib/claude'
+import { VALID_PERIODS } from '@/lib/types'
 
 export const maxDuration = 120
 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     const period = formData.get('period') as string | null
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-    if (!['week1', 'week1half', 'week2'].includes(period ?? ''))
+    if (!VALID_PERIODS.includes(period as any))
       return NextResponse.json({ error: 'Invalid period' }, { status: 400 })
 
     const isText = file.type === 'text/plain' || file.name.endsWith('.txt')

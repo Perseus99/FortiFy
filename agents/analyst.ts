@@ -1,4 +1,5 @@
 import { createAuthClient } from '@/lib/supabase'
+import { VALID_CATEGORIES } from '@/lib/types'
 import type { FinancialProfile, SpendingCategory, Transaction } from '@/lib/types'
 
 function calculateScore(totalSpent: number, totalIncome: number, goalAmount: number): number {
@@ -23,9 +24,7 @@ export async function runAnalystAgent(
 
   const spending = purchases.filter((t: any) => t.category !== 'income')
 
-  const categories: Record<SpendingCategory, number> = {
-    food: 0, subscriptions: 0, shopping: 0, transport: 0, entertainment: 0, utilities: 0, other: 0,
-  }
+  const categories = Object.fromEntries(VALID_CATEGORIES.map(c => [c, 0])) as Record<SpendingCategory, number>
   for (const t of spending) {
     if (t.category && t.category in categories)
       categories[t.category as SpendingCategory] += Number(t.amount)
