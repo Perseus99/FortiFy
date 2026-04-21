@@ -1,8 +1,6 @@
 export type Profile = {
   id: string
   email: string | null
-  nessie_customer_id: string | null
-  nessie_account_id: string | null
   created_at: string
 }
 
@@ -38,7 +36,6 @@ export type WeeklyGoal = {
 export type Transaction = {
   id: string
   user_id: string
-  nessie_id: string | null
   amount: number
   category: string | null
   merchant: string | null

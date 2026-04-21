@@ -437,7 +437,7 @@ export default function DashboardPage() {
         {/* Spending category breakdown */}
         {filteredTransactions.length > 0 && (() => {
           const cats: Record<string, number> = {}
-          filteredTransactions.forEach(t => { if (t.category) cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
+          filteredTransactions.forEach(t => { if (t.category && t.category !== 'income') cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
           const sorted = Object.entries(cats).sort(([,a],[,b]) => b - a).slice(0, 5)
           const max = sorted[0]?.[1] ?? 1
           const icons: Record<string, string> = { food:'🍔', subscriptions:'📱', shopping:'🛍️', transport:'🚗', entertainment:'🎬', utilities:'⚡', other:'📦' }
@@ -505,7 +505,9 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-white text-sm font-medium">${txn.amount.toFixed(2)}</p>
+                    <p className={`text-sm font-medium ${txn.category === 'income' ? 'text-green-400' : 'text-white'}`}>
+                      {txn.category === 'income' ? '+' : ''}${txn.amount.toFixed(2)}
+                    </p>
                     <p className="text-gray-500 text-xs">{txn.category}</p>
                   </div>
                 </div>
