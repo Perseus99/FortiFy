@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import type { GameState, WeeklyGoal, Transaction } from '@/lib/types'
 import type { NPCType } from '@/agents/npc'
 import NPCPopup from '@/components/npc/NPCPopup'
+import StatementUpload from '@/components/StatementUpload'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const [allWeeks, setAllWeeks]     = useState<WeeklyGoal[]>([])
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
+  const [showUpload, setShowUpload]   = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -193,6 +195,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      {/* Statement Upload modal */}
+      {showUpload && userId && (
+        <StatementUpload
+          userId={userId}
+          onClose={() => setShowUpload(false)}
+          onComplete={() => window.location.reload()}
+        />
+      )}
+
       {/* NPC Popup */}
       {activeNPC && userId && (
         <NPCPopup
@@ -207,6 +218,12 @@ export default function DashboardPage() {
       <nav className="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-amber-400">FortifyFi</h1>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-700 hover:border-amber-600 hover:text-amber-400 text-gray-400 rounded-lg text-sm transition-colors"
+          >
+            <span>📄</span> Upload Statement
+          </button>
           <span className="text-gray-400 text-sm">{email}</span>
           <button onClick={handleLogout} className="text-sm text-gray-400 hover:text-white transition-colors">
             Logout

@@ -1,0 +1,53 @@
+FORTIFY BANK — ACCOUNT STATEMENT
+Account: Checking ••••4821
+Statement Period: Current Week, Days 1–4 (Mid-Week Check-In)
+Demo Scenario: Week 1.5 — Same week, more spend has accumulated
+
+================================================================
+TRANSACTIONS
+================================================================
+
+Date        Merchant                        Category          Amount
+------------------------------------------------------------------------
+Day 1       Direct Deposit — Paycheck       Income            $2,800.00
+Day 1       Netflix                         Subscriptions       $15.49
+Day 1       Adobe Creative Cloud            Subscriptions       $54.99
+Day 1       Starbucks Coffee                Food                 $6.50
+Day 1       Shell Gas Station               Transport           $45.00
+Day 2       Local Grill & Bistro            Food                $67.50
+Day 2       Amazon Marketplace              Shopping            $78.99
+Day 2       Chipotle Restaurant             Food                $38.50
+Day 2       Spotify                         Subscriptions        $9.99
+Day 2       Uber Eats                       Food                $34.99
+Day 2       Target Store                    Shopping            $67.00
+Day 2       Cinema Tickets                  Entertainment       $18.00
+Day 2       Starbucks Coffee                Food                 $6.50
+Day 3       Whole Foods Market              Food               $112.00
+Day 3       DoorDash                        Food                $22.50
+Day 3       Starbucks Coffee                Food                 $7.25
+Day 3       CVS Pharmacy                    Shopping            $23.50
+Day 4       Lyft                            Transport           $12.50
+Day 4       Starbucks Coffee                Food                 $8.75
+Day 4       Amazon Marketplace              Shopping            $45.00
+
+================================================================
+SUMMARY
+================================================================
+Total Income:       $2,800.00
+Total Spend:          $678.95
+Net:               +$2,121.05
+
+================================================================
+NOTES FOR DEMO
+================================================================
+- Same week as Week 1 but 4 days in — spend has grown significantly
+- Food goal progress bar should show ~70-80% used with 3 days left
+- Projection line shows likely overshoot if spending continues
+- Great for demonstrating the mid-week forecasting feature
+- Starbucks now appears 4 times — Scout should flag the pattern
+
+HOW TO CREATE PDF:
+1. Copy this text into Google Docs / Word
+2. Export/Print to PDF
+3. Upload using the "Mid-Week" period option
+================================================================
