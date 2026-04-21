@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FortifyFi — Defend Your Finances",
-  description: "A tower defense game where your spending habits determine your defenses. Sync your finances, build towers, survive the wave.",
+  description: "A tower defense game where your spending habits determine your defenses. Upload your bank statement, build towers, survive the wave.",
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>",
   },

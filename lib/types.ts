@@ -64,6 +64,8 @@ export const VALID_CATEGORIES = [
 
 export type SpendingCategory = typeof VALID_CATEGORIES[number]
 
+export type Period = 'week1' | 'week1half' | 'week2'
+
 export interface ParsedTxn {
   merchant: string
   amount: number

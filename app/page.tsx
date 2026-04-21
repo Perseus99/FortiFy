@@ -31,8 +31,8 @@ export default function Home() {
         <div className="grid grid-cols-3 gap-6 text-center">
           <div>
             <div className="text-4xl mb-3">📊</div>
-            <h3 className="text-white font-semibold mb-1">Sync Your Spending</h3>
-            <p className="text-gray-500 text-sm">AI analyzes your weekly transactions and scores your financial discipline from 0–100.</p>
+            <h3 className="text-white font-semibold mb-1">Upload Your Statement</h3>
+            <p className="text-gray-500 text-sm">Upload a bank statement and Claude analyzes your transactions, scoring your financial discipline from 0–100.</p>
           </div>
           <div>
             <div className="text-4xl mb-3">⚔️</div>

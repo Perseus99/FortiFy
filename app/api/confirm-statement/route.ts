@@ -5,11 +5,9 @@ import { runGoalAgent } from '@/agents/goalAgent'
 import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
 import { isoWeekStart, addDays } from '@/lib/utils'
-import type { ParsedTxn } from '@/lib/types'
+import type { ParsedTxn, Period } from '@/lib/types'
 
 export const maxDuration = 300
-
-type Period = 'week1' | 'week1half' | 'week2'
 
 // Spread transactions across the window for the given period (all within current week)
 function assignDates(txns: ParsedTxn[], period: Period, currentMonday: string): (ParsedTxn & { transaction_date: string })[] {

@@ -2,10 +2,9 @@
 
 import { useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { ParsedTxn } from '@/lib/types'
+import type { ParsedTxn, Period } from '@/lib/types'
 import { CAT_ICONS } from '@/lib/constants'
 
-type Period = 'week1' | 'week1half' | 'week2'
 type Step = 'picker' | 'parsing' | 'preview' | 'confirming' | 'done'
 
 const PERIOD_CONFIG: Record<Period, { label: string; badge: string; desc: string; color: string }> = {
