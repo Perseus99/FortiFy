@@ -55,6 +55,14 @@ export async function POST(req: NextRequest) {
     }
 
     const reply = await runNPCAgent(npcType, messages, context)
+
+    // Persist conversation — cap at 20 messages (~10 exchanges) so context stays lean
+    const updated = [...messages, { role: 'assistant', content: reply }].slice(-20)
+    await db.from('npc_conversations').upsert(
+      { user_id: userId, npc_type: npcType, messages: updated, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,npc_type' }
+    )
+
     return NextResponse.json({ reply })
   } catch (err: any) {
     console.error('[npc]', err)

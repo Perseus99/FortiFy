@@ -69,9 +69,32 @@ export default function NPCPopup({ npcType, userId, onClose, gameResult, initial
   const [initialized, setInit]    = useState((initialMessages?.length ?? 0) > 0)
   const bottomRef                 = useRef<HTMLDivElement>(null)
 
-  // Opening message only if no history exists
+  // Load from DB if no in-session cache, then decide whether to send opening message
   useEffect(() => {
-    if ((initialMessages?.length ?? 0) === 0) sendMessage(null)
+    async function init() {
+      if ((initialMessages?.length ?? 0) > 0) return  // session cache hit — already ready
+
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (token) {
+        try {
+          const res = await fetch(`/api/npc-history?userId=${userId}&npcType=${npcType}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          if (res.ok) {
+            const { messages: stored } = await res.json()
+            if (stored?.length > 0) {
+              setMessages(stored)
+              onMessagesUpdate?.(stored)
+              setInit(true)
+              return  // history loaded — no opening message needed
+            }
+          }
+        } catch {}
+      }
+      sendMessage(null)  // no history — send opening message as usual
+    }
+    init()
   }, [])
 
   useEffect(() => {
