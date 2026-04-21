@@ -10,10 +10,11 @@ export async function POST(req: NextRequest) {
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { userId, npcType, messages } = await req.json() as {
+    const { userId, npcType, messages, gameResult } = await req.json() as {
       userId: string
       npcType: NPCType
       messages: NPCMessage[]
+      gameResult?: { won: boolean; points: number; cityHealth: number }
     }
 
     const db = createAuthClient(token)
@@ -44,11 +45,13 @@ export async function POST(req: NextRequest) {
       goalAmount:  goal?.goal_amount  ?? 3000,
       score:       goal?.score        ?? 0,
       savingsRate: totalIncome > 0 ? (totalIncome - totalSpent) / totalIncome : undefined,
+      totalIncome,
       categories,
       flaggedTransactions: (txns ?? [])
         .filter(t => t.flagged)
         .map(t => ({ merchant: t.merchant ?? 'Unknown', amount: Number(t.amount), flag_reason: t.flag_reason })),
       playerHistory,
+      gameResult,
     }
 
     const reply = await runNPCAgent(npcType, messages, context)

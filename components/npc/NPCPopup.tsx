@@ -32,6 +32,33 @@ const NPC_CONFIG = {
     bubbleBg: 'bg-teal-950/40',
     tagline: 'Spending Investigator',
   },
+  architect: {
+    name: 'The Architect',
+    icon: '📐',
+    color: 'border-blue-700',
+    headerBg: 'bg-blue-950',
+    headerText: 'text-blue-400',
+    bubbleBg: 'bg-blue-950/40',
+    tagline: 'Savings Strategist',
+  },
+  quartermaster: {
+    name: 'The Quartermaster',
+    icon: '📦',
+    color: 'border-amber-700',
+    headerBg: 'bg-amber-950',
+    headerText: 'text-amber-400',
+    bubbleBg: 'bg-amber-950/40',
+    tagline: 'Budget Allocator',
+  },
+  medic: {
+    name: 'The Medic',
+    icon: '🏥',
+    color: 'border-green-700',
+    headerBg: 'bg-green-950',
+    headerText: 'text-green-400',
+    bubbleBg: 'bg-green-950/40',
+    tagline: 'Recovery Specialist',
+  },
 }
 
 export default function NPCPopup({ npcType, userId, onClose, gameResult, initialMessages, onMessagesUpdate }: Props) {
@@ -68,23 +95,25 @@ export default function NPCPopup({ npcType, userId, onClose, gameResult, initial
     if (!token) { setLoading(false); return }
 
     // Opening prompt — include game result if triggered post-game
-    let openingPrompt: string
-    if (npcType === 'warden') {
-      openingPrompt = gameResult
-        ? `My fortress just ${gameResult.won ? 'held' : 'fell'}! I ended with ${gameResult.points} points and ${gameResult.cityHealth} city HP. Give me your full assessment.`
-        : 'Give me your assessment of my finances this week.'
-    } else {
-      openingPrompt = gameResult
-        ? `My fortress just ${gameResult.won ? 'held' : 'fell'} with ${gameResult.cityHealth} city HP remaining. What did you find in my spending this week?`
-        : 'What have you found in my spending this week?'
+    const gameOutcome = gameResult
+      ? `My fortress just ${gameResult.won ? 'held' : 'fell'} with ${gameResult.cityHealth} HP remaining and ${gameResult.points} points.`
+      : null
+
+    const openingPrompts: Record<string, string> = {
+      warden:       gameOutcome ? `${gameOutcome} Give me your full assessment.` : 'Give me your assessment of my finances this week.',
+      scout:        gameOutcome ? `${gameOutcome} What did you find in my spending this week?` : 'What have you found in my spending this week?',
+      architect:    gameOutcome ? `${gameOutcome} What does my financial blueprint look like?` : 'Assess my savings structure and tell me what to build next.',
+      quartermaster: gameOutcome ? `${gameOutcome} How are my resources allocated?` : 'Run a full supply audit on my spending categories.',
+      medic:        gameOutcome ? `${gameOutcome} I need damage assessment and a recovery plan.` : 'Assess my financial health and give me a recovery plan.',
     }
+    const openingPrompt = openingPrompts[npcType] ?? 'Give me your assessment.'
 
     const payload = userText === null ? [{ role: 'user' as const, content: openingPrompt }] : newMessages
 
     const res = await fetch('/api/npc', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ userId, npcType, messages: payload }),
+      body: JSON.stringify({ userId, npcType, messages: payload, gameResult }),
     })
 
     if (res.ok) {

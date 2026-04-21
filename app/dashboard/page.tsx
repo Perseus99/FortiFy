@@ -352,6 +352,26 @@ export default function DashboardPage() {
               <p className="text-gray-400 text-xs mt-0.5">Spending Investigator</p>
               {hasFlagged && <p className="text-teal-400 text-xs mt-2 font-medium">🔍 Suspicious transactions found</p>}
             </button>
+
+            <button
+              onClick={() => setActiveNPC('architect')}
+              className="relative text-left p-4 rounded-lg border bg-gray-900 border-gray-800 hover:border-blue-800 transition-all hover:scale-[1.02]"
+            >
+              <p className="text-2xl mb-1">📐</p>
+              <p className="text-white font-semibold">The Architect</p>
+              <p className="text-gray-400 text-xs mt-0.5">Savings Strategist</p>
+              <p className="text-blue-400 text-xs mt-2">Plan your savings structure</p>
+            </button>
+
+            <button
+              onClick={() => setActiveNPC('quartermaster')}
+              className="relative text-left p-4 rounded-lg border bg-gray-900 border-gray-800 hover:border-amber-800 transition-all hover:scale-[1.02]"
+            >
+              <p className="text-2xl mb-1">📦</p>
+              <p className="text-white font-semibold">The Quartermaster</p>
+              <p className="text-gray-400 text-xs mt-0.5">Budget Allocator</p>
+              <p className="text-amber-400 text-xs mt-2">Audit your category spending</p>
+            </button>
           </div>
         )}
 

@@ -62,9 +62,11 @@ export default function GamePage() {
     )
   }
 
-  function openPostGameNPC() {
+  function openPostGameNPC(type?: NPCType) {
     if (!result) return
-    setActiveNPC(!result.won || result.cityHealth < 50 ? 'warden' : 'scout')
+    if (type) { setActiveNPC(type); return }
+    // Default: Medic on loss, Architect on win
+    setActiveNPC(result.won ? 'architect' : 'medic')
   }
 
   if (loading) return (
@@ -99,10 +101,18 @@ export default function GamePage() {
             <p className="text-gray-300 text-sm mt-1">
               Points: {result.points} &nbsp;|&nbsp; City HP: {result.cityHealth}
             </p>
-            <div className="flex gap-3 justify-center mt-3">
-              <button onClick={openPostGameNPC}
-                className="px-4 py-2 border border-amber-600 hover:border-amber-400 text-amber-400 rounded font-semibold text-sm transition-colors">
-                Talk to Advisor
+            <div className="flex gap-3 justify-center mt-3 flex-wrap">
+              <button onClick={() => openPostGameNPC()}
+                className={`px-4 py-2 border font-semibold text-sm rounded transition-colors ${
+                  result.won
+                    ? 'border-blue-600 hover:border-blue-400 text-blue-400'
+                    : 'border-green-600 hover:border-green-400 text-green-400'
+                }`}>
+                {result.won ? '📐 Talk to Architect' : '🏥 Talk to Medic'}
+              </button>
+              <button onClick={() => openPostGameNPC('warden')}
+                className="px-4 py-2 border border-red-700 hover:border-red-500 text-red-400 rounded font-semibold text-sm transition-colors">
+                ⚔️ Talk to Warden
               </button>
               <button onClick={() => router.push('/dashboard')}
                 className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded font-semibold text-sm transition-colors">
