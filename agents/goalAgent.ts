@@ -1,4 +1,5 @@
 import { chat } from '@/lib/claude'
+import type { PlayerContext } from './contextAgent'
 
 export interface GoalAgentInput {
   categories: Record<string, number>
@@ -6,6 +7,7 @@ export interface GoalAgentInput {
   totalSpent: number
   totalIncome: number
   excludedCategories?: string[]  // user-dismissed categories, skip these
+  playerHistory?: PlayerContext
 }
 
 export interface GoalOutput {
@@ -75,7 +77,7 @@ function ruleBasedGoal(input: GoalAgentInput): GoalOutput {
 }
 
 export async function runGoalAgent(input: GoalAgentInput): Promise<GoalOutput> {
-  const { categories, flaggedTransactions, totalSpent, totalIncome, excludedCategories = [] } = input
+  const { categories, flaggedTransactions, totalSpent, totalIncome, excludedCategories = [], playerHistory } = input
 
   const categoryList = Object.entries(categories)
     .filter(([cat, v]) => Number(v) > 0 && !excludedCategories.includes(cat))
@@ -90,11 +92,18 @@ export async function runGoalAgent(input: GoalAgentInput): Promise<GoalOutput> {
     ? `\nUser has marked these categories as intentional — do NOT target them: ${excludedCategories.join(', ')}`
     : ''
 
-  const prompt = `You are a financial risk analyst. Given a user's spending data, identify the RISKIEST spending category — not necessarily the largest. Risk factors: subscriptions (easy to forget, compound silently), flagged/suspicious transactions, impulse categories (shopping, entertainment), high frequency small purchases.
+  const historyNote = playerHistory && playerHistory.weeksTracked > 0 ? `
+
+Player history (${playerHistory.weeksTracked} weeks): ${playerHistory.summary}
+- If the same category was targeted last week and the player FAILED, consider targeting it again with a tighter amount.
+- If the player succeeded last week (${playerHistory.lastGoalCategory} under $${playerHistory.lastGoalTargetAmount}), challenge a different or harder category.
+- Recurring problem area: ${playerHistory.worstCategory ?? 'none identified'}.` : ''
+
+  const prompt = `You are a financial risk analyst for a tower defense game. Given spending data, identify the RISKIEST category for the player to target this week — not necessarily the largest. Risk factors: subscriptions (easy to forget), flagged transactions, impulse categories (shopping, entertainment), repeated failures.
 
 Spending by category: ${categoryList || 'none available'}
 Flagged transactions: ${flagList}
-Total spent: $${totalSpent.toFixed(2)} | Total income: $${totalIncome.toFixed(2)}${exclusionNote}
+Total spent: $${totalSpent.toFixed(2)} | Total income: $${totalIncome.toFixed(2)}${exclusionNote}${historyNote}
 
 Return ONLY valid JSON, no explanation:
 {

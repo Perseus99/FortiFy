@@ -1,5 +1,6 @@
 import { runWardenAgent } from './warden'
 import { runScoutAgent } from './scout'
+import type { PlayerContext } from './contextAgent'
 
 export type NPCType = 'warden' | 'scout'
 
@@ -15,6 +16,7 @@ export interface NPCContext {
   savingsRate?: number
   categories: Record<string, number>
   flaggedTransactions: { merchant: string; amount: number; flag_reason: string | null }[]
+  playerHistory?: PlayerContext
 }
 
 export async function runNPCAgent(

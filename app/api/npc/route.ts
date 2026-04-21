@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runNPCAgent, NPCType, NPCMessage, NPCContext } from '@/agents/npc'
+import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
 
 export const maxDuration = 120
@@ -17,19 +18,20 @@ export async function POST(req: NextRequest) {
 
     const db = createAuthClient(token)
 
-    // Build context from DB
-    const [{ data: goal }, { data: txns }, { data: deposits }] = await Promise.all([
+    const [{ data: goal }, { data: txns }, { data: deposits }, playerHistory] = await Promise.all([
       db.from('weekly_goals').select('goal_amount,actual_spent,score')
         .eq('user_id', userId).eq('completed', false)
         .order('created_at', { ascending: false }).limit(1).single(),
       db.from('transactions').select('merchant,amount,category,flagged,flag_reason')
         .eq('user_id', userId).order('transaction_date', { ascending: false }).limit(30),
       db.from('transactions').select('amount').eq('user_id', userId).eq('category', 'income').limit(10),
+      buildPlayerContext(userId, token),
     ])
 
     const categories: Record<string, number> = {}
     let totalSpent = 0
     for (const t of txns ?? []) {
+      if (t.category === 'income') continue
       const cat = t.category ?? 'other'
       categories[cat] = (categories[cat] ?? 0) + Number(t.amount)
       totalSpent += Number(t.amount)
@@ -46,6 +48,7 @@ export async function POST(req: NextRequest) {
       flaggedTransactions: (txns ?? [])
         .filter(t => t.flagged)
         .map(t => ({ merchant: t.merchant ?? 'Unknown', amount: Number(t.amount), flag_reason: t.flag_reason })),
+      playerHistory,
     }
 
     const reply = await runNPCAgent(npcType, messages, context)

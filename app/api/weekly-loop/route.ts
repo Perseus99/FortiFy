@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { runAnalystAgent } from '@/agents/analyst'
 import { runGameEngineAgent } from '@/agents/gameEngine'
 import { runGoalAgent } from '@/agents/goalAgent'
+import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
 
 // Returns the ISO Monday of the week containing `date`, as YYYY-MM-DD (UTC)
@@ -116,11 +117,11 @@ export async function POST(req: NextRequest) {
         .eq('user_id', userId)
         .eq('completed', false)
 
-      // Load user's dismissed category preferences
-      const { data: prefs } = await db.from('category_preferences')
-        .select('category')
-        .eq('user_id', userId)
-        .eq('dismissed', true)
+      // Load dismissed categories and player history in parallel
+      const [{ data: prefs }, playerHistory] = await Promise.all([
+        db.from('category_preferences').select('category').eq('user_id', userId).eq('dismissed', true),
+        buildPlayerContext(userId, token),
+      ])
       const excludedCategories = (prefs ?? []).map(p => p.category)
 
       const goalResult = await runGoalAgent({
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
         totalSpent: financialProfile.total_spent,
         totalIncome: financialProfile.total_income,
         excludedCategories,
+        playerHistory,
       })
 
       await db.from('weekly_goals').insert({
