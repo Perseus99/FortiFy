@@ -62,14 +62,14 @@ export default function Home() {
             <p className="text-gray-500 text-sm">Enemy waves scale with your financial score. Overspend and face a relentless horde.</p>
           </div>
           <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <p className="text-2xl mb-2">⚔️</p>
-            <h3 className="text-white font-semibold mb-1">The Warden</h3>
-            <p className="text-gray-500 text-sm">Strict financial enforcer. Calls out your overspending with zero mercy after every battle.</p>
+            <p className="text-2xl mb-2">⚔️ 🔍 📐</p>
+            <h3 className="text-white font-semibold mb-1">5 AI Advisors</h3>
+            <p className="text-gray-500 text-sm">The Warden, Scout, Architect, Quartermaster, and Medic — each with their own persona and specialty. They remember your history across weeks.</p>
           </div>
           <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <p className="text-2xl mb-2">🔍</p>
-            <h3 className="text-white font-semibold mb-1">The Scout</h3>
-            <p className="text-gray-500 text-sm">Spots recurring charges and suspicious transactions you forgot about. Always watching.</p>
+            <p className="text-2xl mb-2">📄</p>
+            <h3 className="text-white font-semibold mb-1">Statement Upload</h3>
+            <p className="text-gray-500 text-sm">Upload a bank statement PDF or use a demo sample. Claude parses it, categorizes every transaction, and sets your wave difficulty.</p>
           </div>
         </div>
       </div>
