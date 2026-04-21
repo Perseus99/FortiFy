@@ -113,12 +113,15 @@ Return ONLY valid JSON, no explanation:
   "risk_reason": "<one sentence explaining why this category is risky>"
 }`
 
+  const VALID_CATEGORIES = ['food', 'subscriptions', 'shopping', 'transport', 'entertainment', 'utilities', 'other']
+
   try {
     const response = await chat('You are a financial risk analyst. Return only valid JSON.', prompt)
     const match = response.match(/\{[\s\S]*\}/)
     if (!match) return ruleBasedGoal(input)
     const parsed = JSON.parse(match[0])
     if (!parsed.goal_category || !parsed.goal_label || !parsed.goal_amount) return ruleBasedGoal(input)
+    if (!VALID_CATEGORIES.includes(parsed.goal_category)) return ruleBasedGoal(input)
     return parsed as GoalOutput
   } catch {
     return ruleBasedGoal(input)

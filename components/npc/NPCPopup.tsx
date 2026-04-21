@@ -9,6 +9,8 @@ interface Props {
   userId: string
   onClose: () => void
   gameResult?: { won: boolean; points: number; cityHealth: number }
+  initialMessages?: NPCMessage[]
+  onMessagesUpdate?: (msgs: NPCMessage[]) => void
 }
 
 const NPC_CONFIG = {
@@ -32,17 +34,17 @@ const NPC_CONFIG = {
   },
 }
 
-export default function NPCPopup({ npcType, userId, onClose, gameResult }: Props) {
+export default function NPCPopup({ npcType, userId, onClose, gameResult, initialMessages, onMessagesUpdate }: Props) {
   const config = NPC_CONFIG[npcType]
-  const [messages, setMessages]   = useState<NPCMessage[]>([])
+  const [messages, setMessages]   = useState<NPCMessage[]>(initialMessages ?? [])
   const [input, setInput]         = useState('')
   const [loading, setLoading]     = useState(false)
-  const [initialized, setInit]    = useState(false)
+  const [initialized, setInit]    = useState((initialMessages?.length ?? 0) > 0)
   const bottomRef                 = useRef<HTMLDivElement>(null)
 
-  // Opening message on mount
+  // Opening message only if no history exists
   useEffect(() => {
-    sendMessage(null)
+    if ((initialMessages?.length ?? 0) === 0) sendMessage(null)
   }, [])
 
   useEffect(() => {
@@ -56,7 +58,10 @@ export default function NPCPopup({ npcType, userId, onClose, gameResult }: Props
       ? [...messages, { role: 'user', content: userText }]
       : messages
 
-    if (userText) setMessages(newMessages)
+    if (userText) {
+      setMessages(newMessages)
+      onMessagesUpdate?.(newMessages)
+    }
 
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token
@@ -85,10 +90,11 @@ export default function NPCPopup({ npcType, userId, onClose, gameResult }: Props
     if (res.ok) {
       // Minimum 1.2s typing delay so NPC feels alive
       const [data] = await Promise.all([res.json(), new Promise(r => setTimeout(r, 1200))])
-      setMessages(prev => [
-        ...(userText ? prev : []),
-        { role: 'assistant', content: data.reply },
-      ])
+      setMessages(prev => {
+        const updated = [...(userText ? prev : []), { role: 'assistant' as const, content: data.reply }]
+        onMessagesUpdate?.(updated)
+        return updated
+      })
     }
 
     setInit(true)

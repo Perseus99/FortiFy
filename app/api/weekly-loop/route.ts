@@ -154,6 +154,12 @@ export async function POST(req: NextRequest) {
       { points: goalPointsDelta, health: goalHealthDelta }
     )
 
+    // Keep active goal's score current so dashboard shows live score each sync
+    await db.from('weekly_goals')
+      .update({ score: financialProfile.score })
+      .eq('user_id', userId)
+      .eq('completed', false)
+
     return NextResponse.json({ financialProfile, waveConfig, goalAchieved, goalPointsDelta, goalHealthDelta })
   } catch (err: any) {
     console.error('[weekly-loop]', err)

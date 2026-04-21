@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAuthClient } from '@/lib/supabase'
 import { runGoalAgent } from '@/agents/goalAgent'
+import { buildPlayerContext } from '@/agents/contextAgent'
+
+function isoWeekStart(date: Date): string {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+  const day = d.getUTCDay()
+  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1))
+  return d.toISOString().split('T')[0]
+}
 
 export const maxDuration = 60
 
@@ -20,23 +28,25 @@ export async function POST(req: NextRequest) {
       { onConflict: 'user_id,category' }
     )
 
-    // Fetch all dismissed categories for this user
-    const { data: prefs } = await db.from('category_preferences')
-      .select('category')
-      .eq('user_id', userId)
-      .eq('dismissed', true)
-    const excludedCategories = (prefs ?? []).map(p => p.category)
+    // Fetch all dismissed categories, all transactions, and player context in parallel
+    const [{ data: prefs }, { data: txns }, playerHistory] = await Promise.all([
+      db.from('category_preferences').select('category').eq('user_id', userId).eq('dismissed', true),
+      db.from('transactions').select('category, amount, merchant, flagged, flag_reason').eq('user_id', userId),
+      buildPlayerContext(userId, token),
+    ])
 
-    // Re-fetch transaction category totals
-    const { data: txns } = await db.from('transactions')
-      .select('category, amount, merchant, flagged, flag_reason')
-      .eq('user_id', userId)
+    const excludedCategories = (prefs ?? []).map(p => p.category)
 
     const catTotals: Record<string, number> = {}
     const flagged: { merchant: string; amount: number; flag_reason: string | null }[] = []
     let totalSpent = 0
+    let totalIncome = 0
 
     for (const t of txns ?? []) {
+      if (t.category === 'income') {
+        totalIncome += Number(t.amount)
+        continue
+      }
       if (t.category) {
         catTotals[t.category] = (catTotals[t.category] ?? 0) + Number(t.amount)
         totalSpent += Number(t.amount)
@@ -46,13 +56,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Re-run Goal Agent with exclusions
+    // Re-run Goal Agent with exclusions and full context
     const goalResult = await runGoalAgent({
       categories: catTotals,
       flaggedTransactions: flagged,
       totalSpent,
-      totalIncome: 0,
+      totalIncome,
       excludedCategories,
+      playerHistory,
     })
 
     // Mark current open goal completed and insert the recalculated one
@@ -61,10 +72,10 @@ export async function POST(req: NextRequest) {
       .eq('user_id', userId)
       .eq('completed', false)
 
-    const todayStr = new Date().toISOString().split('T')[0]
+    const weekStartStr = isoWeekStart(new Date())
     const { data: newGoal } = await db.from('weekly_goals').insert({
       user_id: userId,
-      week_start_date: todayStr,
+      week_start_date: weekStartStr,
       goal_amount: goalResult.goal_amount,
       goal_category: goalResult.goal_category,
       goal_label: goalResult.goal_label,

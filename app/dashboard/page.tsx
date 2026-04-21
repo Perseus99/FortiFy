@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [dismissing, setDismissing] = useState(false)
   const [allWeeks, setAllWeeks]     = useState<WeeklyGoal[]>([])
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
+  const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
 
   useEffect(() => {
     async function load() {
@@ -154,14 +155,15 @@ export default function DashboardPage() {
     </div>
   )
 
-  // Cumulative week filter: Week 1 = oldest 7 days, Week 2 = oldest 14 days, etc.
+  // Per-week filter: each pill shows only transactions within that week's date range
   const weeksOldestFirst = [...allWeeks].reverse()
   const filteredTransactions = (selectedWeek && weeksOldestFirst.length > 0)
     ? transactions.filter(t => {
         if (!t.transaction_date) return true
-        const oldest = weeksOldestFirst[0].week_start_date
-        const nextWeekEntry = weeksOldestFirst[selectedWeek]  // undefined for last pill → no upper bound
-        return t.transaction_date >= oldest &&
+        const weekEntry    = weeksOldestFirst[selectedWeek - 1]  // selected week's start (1-indexed)
+        const nextWeekEntry = weeksOldestFirst[selectedWeek]      // next week's start (upper bound)
+        if (!weekEntry) return true
+        return t.transaction_date >= weekEntry.week_start_date &&
                (!nextWeekEntry || t.transaction_date < nextWeekEntry.week_start_date)
       })
     : transactions
@@ -193,7 +195,13 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-950 text-white">
       {/* NPC Popup */}
       {activeNPC && userId && (
-        <NPCPopup npcType={activeNPC} userId={userId} onClose={() => setActiveNPC(null)} />
+        <NPCPopup
+          npcType={activeNPC}
+          userId={userId}
+          onClose={() => setActiveNPC(null)}
+          initialMessages={npcMessages[activeNPC] ?? []}
+          onMessagesUpdate={msgs => setNpcMessages(prev => ({ ...prev, [activeNPC]: msgs }))}
+        />
       )}
       {/* Nav */}
       <nav className="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
@@ -207,6 +215,14 @@ export default function DashboardPage() {
       </nav>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+
+        {/* HP = 0 rebuild banner */}
+        {!needsSetup && gameState?.city_health === 0 && (
+          <div className="bg-red-950/50 border border-red-700 rounded-lg p-4">
+            <p className="text-red-400 font-semibold text-sm">⚠ Your fortress has fallen</p>
+            <p className="text-gray-400 text-xs mt-1">Sync your data to rebuild defenses and restore city HP for next week's battle.</p>
+          </div>
+        )}
 
         {/* Setup banner */}
         {needsSetup && (
@@ -273,7 +289,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
             <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Week Score</p>
-            {goal?.score != null ? (
+            {goal?.score != null && (goal.completed || goal.score > 0) ? (
               <div>
                 <div className="flex items-center gap-2">
                   <p className="text-3xl font-bold text-green-400">{goal.score}</p>
@@ -291,7 +307,12 @@ export default function DashboardPage() {
                   {goal.score >= 80 ? 'Easy wave · bonus tower unlocked' : goal.score >= 50 ? 'Medium wave' : 'Hard wave · city pre-damaged'}
                 </p>
               </div>
-            ) : <p className="text-3xl font-bold text-green-400">—</p>}
+            ) : (
+              <div>
+                <p className="text-3xl font-bold text-gray-600">—</p>
+                <p className="text-gray-600 text-xs mt-1">Sync to calculate score</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -427,7 +448,12 @@ export default function DashboardPage() {
                   disabled={dismissing}
                   className="text-xs text-gray-400 hover:text-amber-400 disabled:opacity-40 transition-colors underline underline-offset-2"
                 >
-                  {dismissing ? 'Recalculating...' : `Skip ${goal.goal_category} → find another goal`}
+                  {dismissing ? 'Recalculating...' : `Skip ${
+                    { food: 'Food', subscriptions: 'Subscriptions', shopping: 'Shopping',
+                      transport: 'Transport', entertainment: 'Entertainment',
+                      utilities: 'Utilities', other: 'Other spending' }[goal.goal_category]
+                    ?? goal.goal_category
+                  } → find another goal`}
                 </button>
               </div>
             )}
