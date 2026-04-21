@@ -81,7 +81,7 @@ export default function Home() {
           className="px-10 py-4 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg transition-colors text-lg">
           Build Your Fortress →
         </Link>
-        <p className="text-gray-600 text-xs mt-8">Powered by Capital One Nessie API · Claude AI · Supabase</p>
+        <p className="text-gray-600 text-xs mt-8">Powered by Claude AI · Supabase</p>
       </div>
 
     </main>

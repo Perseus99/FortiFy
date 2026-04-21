@@ -1,5 +1,6 @@
 -- FortifyFi Database Schema
 -- Run this in Supabase SQL Editor: supabase.com → your project → SQL Editor → New Query
+-- After this file, also run: functions.sql, then npc_conversations.sql
 
 -- ============================================================
 -- PROFILES (extends Supabase auth.users)
@@ -7,8 +8,6 @@
 create table if not exists public.profiles (
   id uuid references auth.users(id) on delete cascade primary key,
   email text,
-  nessie_customer_id text,
-  nessie_account_id text,
   created_at timestamptz default now()
 );
 
@@ -52,16 +51,17 @@ create table if not exists public.weekly_goals (
   actual_spent numeric(10,2) default 0,
   score integer default 0,
   completed boolean default false,
+  goal_category text,
+  goal_label text,
   created_at timestamptz default now()
 );
 
 -- ============================================================
--- TRANSACTIONS (cached from Nessie)
+-- TRANSACTIONS
 -- ============================================================
 create table if not exists public.transactions (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
-  nessie_id text,
   amount numeric(10,2) not null,
   category text,
   merchant text,
@@ -88,6 +88,20 @@ create table if not exists public.wave_config (
 );
 
 -- ============================================================
+-- CATEGORY PREFERENCES (user-dismissed goal categories)
+-- ============================================================
+create table if not exists public.category_preferences (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  category text not null,
+  dismissed boolean default false,
+  reason text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id, category)
+);
+
+-- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 alter table public.profiles enable row level security;
@@ -95,17 +109,16 @@ alter table public.game_state enable row level security;
 alter table public.weekly_goals enable row level security;
 alter table public.transactions enable row level security;
 alter table public.wave_config enable row level security;
+alter table public.category_preferences enable row level security;
 
--- Profiles: users can only see/edit their own
+-- Profiles
 create policy "users can view own profile" on public.profiles
   for select using (auth.uid() = id);
 create policy "users can update own profile" on public.profiles
   for update using (auth.uid() = id);
 
 -- Game state
-create policy "users can view own game state" on public.game_state
-  for select using (auth.uid() = user_id);
-create policy "users can update own game state" on public.game_state
+create policy "users can manage own game state" on public.game_state
   for all using (auth.uid() = user_id);
 
 -- Weekly goals
@@ -117,5 +130,9 @@ create policy "users can manage own transactions" on public.transactions
   for all using (auth.uid() = user_id);
 
 -- Wave config
-create policy "users can view own wave config" on public.wave_config
+create policy "users can manage own wave config" on public.wave_config
+  for all using (auth.uid() = user_id);
+
+-- Category preferences
+create policy "users can manage own preferences" on public.category_preferences
   for all using (auth.uid() = user_id);
