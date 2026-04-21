@@ -58,14 +58,19 @@ export type WaveConfig = {
   created_at: string
 }
 
-export type SpendingCategory =
-  | 'food'
-  | 'subscriptions'
-  | 'shopping'
-  | 'transport'
-  | 'entertainment'
-  | 'utilities'
-  | 'other'
+export const VALID_CATEGORIES = [
+  'food', 'subscriptions', 'shopping', 'transport', 'entertainment', 'utilities', 'other',
+] as const
+
+export type SpendingCategory = typeof VALID_CATEGORIES[number]
+
+export interface ParsedTxn {
+  merchant: string
+  amount: number
+  category: string
+  flagged: boolean
+  flag_reason: string | null
+}
 
 export type FinancialProfile = {
   score: number

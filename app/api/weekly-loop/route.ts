@@ -4,14 +4,7 @@ import { runGameEngineAgent } from '@/agents/gameEngine'
 import { runGoalAgent } from '@/agents/goalAgent'
 import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
-
-// Returns the ISO Monday of the week containing `date`, as YYYY-MM-DD (UTC)
-function isoWeekStart(date: Date): string {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-  const day = d.getUTCDay()
-  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1))
-  return d.toISOString().split('T')[0]
-}
+import { isoWeekStart } from '@/lib/utils'
 
 export const maxDuration = 300
 

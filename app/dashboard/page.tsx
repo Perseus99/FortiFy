@@ -7,6 +7,7 @@ import type { GameState, WeeklyGoal, Transaction } from '@/lib/types'
 import type { NPCType } from '@/agents/npc'
 import NPCPopup from '@/components/npc/NPCPopup'
 import StatementUpload from '@/components/StatementUpload'
+import { CAT_ICONS } from '@/lib/constants'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -503,14 +504,13 @@ export default function DashboardPage() {
           filteredTransactions.forEach(t => { if (t.category && t.category !== 'income') cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
           const sorted = Object.entries(cats).sort(([,a],[,b]) => b - a).slice(0, 5)
           const max = sorted[0]?.[1] ?? 1
-          const icons: Record<string, string> = { food:'🍔', subscriptions:'📱', shopping:'🛍️', transport:'🚗', entertainment:'🎬', utilities:'⚡', other:'📦' }
           return (
             <div className="bg-gray-900 rounded-lg p-5 border border-gray-800">
               <h2 className="text-white font-semibold mb-3">Spending Breakdown</h2>
               <div className="space-y-2">
                 {sorted.map(([cat, amt]) => (
                   <div key={cat} className="flex items-center gap-3">
-                    <span className="text-sm w-4">{icons[cat] ?? '📦'}</span>
+                    <span className="text-sm w-4">{CAT_ICONS[cat] ?? '📦'}</span>
                     <span className="text-gray-400 text-xs w-24 capitalize">{cat}</span>
                     <div className="flex-1 bg-gray-800 rounded-full h-2">
                       <div className="h-2 rounded-full bg-amber-500 transition-all" style={{ width: `${(amt / max) * 100}%` }} />

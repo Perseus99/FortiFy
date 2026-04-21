@@ -1,26 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAuthClient } from '@/lib/supabase'
+import { weeksAgoMonday, daysAgo } from '@/lib/utils'
 
 export const maxDuration = 60
-
-function isoWeekStart(date: Date): string {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-  const day = d.getUTCDay()
-  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1))
-  return d.toISOString().split('T')[0]
-}
-
-function weeksAgoMonday(n: number): string {
-  const d = new Date()
-  d.setUTCDate(d.getUTCDate() - n * 7)
-  return isoWeekStart(d)
-}
-
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
-}
 
 export async function POST(req: NextRequest) {
   try {

@@ -2,17 +2,11 @@
 
 import { useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import type { ParsedTxn } from '@/lib/types'
+import { CAT_ICONS } from '@/lib/constants'
 
 type Period = 'week1' | 'week1half' | 'week2'
 type Step = 'picker' | 'parsing' | 'preview' | 'confirming' | 'done'
-
-interface ParsedTxn {
-  merchant: string
-  amount: number
-  category: string
-  flagged: boolean
-  flag_reason: string | null
-}
 
 const PERIOD_CONFIG: Record<Period, { label: string; badge: string; desc: string; color: string }> = {
   week1:     { label: 'Week 1',       badge: 'W1',  desc: 'Full feature demo — goals, NPCs, game', color: 'border-amber-600 bg-amber-500/10 text-amber-400' },
@@ -20,10 +14,6 @@ const PERIOD_CONFIG: Record<Period, { label: string; badge: string; desc: string
   week2:     { label: 'Week 2',       badge: 'W2',  desc: 'New week — NPC memory of Week 1',       color: 'border-green-600 bg-green-500/10 text-green-400' },
 }
 
-const CAT_ICONS: Record<string, string> = {
-  food: '🍔', subscriptions: '📱', shopping: '🛍️', transport: '🚗',
-  entertainment: '🎬', utilities: '⚡', income: '💰', other: '📦',
-}
 
 interface Props {
   userId: string

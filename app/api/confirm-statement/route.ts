@@ -4,31 +4,12 @@ import { runGameEngineAgent } from '@/agents/gameEngine'
 import { runGoalAgent } from '@/agents/goalAgent'
 import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
+import { isoWeekStart, addDays } from '@/lib/utils'
+import type { ParsedTxn } from '@/lib/types'
 
 export const maxDuration = 300
 
 type Period = 'week1' | 'week1half' | 'week2'
-
-interface ParsedTxn {
-  merchant: string
-  amount: number
-  category: string
-  flagged: boolean
-  flag_reason: string | null
-}
-
-function isoWeekStart(date: Date): string {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-  const day = d.getUTCDay()
-  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1))
-  return d.toISOString().split('T')[0]
-}
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() + days)
-  return d.toISOString().split('T')[0]
-}
 
 // Spread transactions across the window for the given period (all within current week)
 function assignDates(txns: ParsedTxn[], period: Period, currentMonday: string): (ParsedTxn & { transaction_date: string })[] {

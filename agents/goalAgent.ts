@@ -1,5 +1,6 @@
 import { chat } from '@/lib/claude'
 import type { PlayerContext } from './contextAgent'
+import { VALID_CATEGORIES } from '@/lib/types'
 
 export interface GoalAgentInput {
   categories: Record<string, number>
@@ -112,8 +113,6 @@ Return ONLY valid JSON, no explanation:
   "goal_amount": <target dollar amount as integer>,
   "risk_reason": "<one sentence explaining why this category is risky>"
 }`
-
-  const VALID_CATEGORIES = ['food', 'subscriptions', 'shopping', 'transport', 'entertainment', 'utilities', 'other']
 
   try {
     const response = await chat('You are a financial risk analyst. Return only valid JSON.', prompt)
