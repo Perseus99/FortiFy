@@ -19,26 +19,24 @@ export async function POST(req: NextRequest) {
 
     const db = createAuthClient(token)
 
-    const [{ data: goal }, { data: txns }, { data: deposits }, playerHistory] = await Promise.all([
+    const [{ data: goal }, { data: txns }, playerHistory] = await Promise.all([
       db.from('weekly_goals').select('goal_amount,actual_spent,score')
         .eq('user_id', userId).eq('completed', false)
         .order('created_at', { ascending: false }).limit(1).single(),
       db.from('transactions').select('merchant,amount,category,flagged,flag_reason')
-        .eq('user_id', userId).order('transaction_date', { ascending: false }).limit(30),
-      db.from('transactions').select('amount').eq('user_id', userId).eq('category', 'income').limit(10),
+        .eq('user_id', userId).order('transaction_date', { ascending: false }).limit(100),
       buildPlayerContext(userId, token),
     ])
 
     const categories: Record<string, number> = {}
     let totalSpent = 0
+    let totalIncome = 0
     for (const t of txns ?? []) {
-      if (t.category === 'income') continue
+      if (t.category === 'income') { totalIncome += Number(t.amount); continue }
       const cat = t.category ?? 'other'
       categories[cat] = (categories[cat] ?? 0) + Number(t.amount)
       totalSpent += Number(t.amount)
     }
-
-    const totalIncome = (deposits ?? []).reduce((s, d) => s + Number(d.amount), 0)
 
     const context: NPCContext = {
       totalSpent:  goal?.actual_spent ?? totalSpent,

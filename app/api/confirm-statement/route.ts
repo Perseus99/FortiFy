@@ -38,10 +38,11 @@ export async function POST(req: NextRequest) {
     const currentMonday = isoWeekStart(today)
     const lastMonday    = addDays(currentMonday, -7)
 
-    // Clear existing transactions and goals — preserve npc_conversations (NPC memory) and game_state
+    // Clear existing transactions, goals, and NPC conversations so NPCs re-open with fresh context
     await Promise.all([
       db.from('transactions').delete().eq('user_id', userId),
       db.from('weekly_goals').delete().eq('user_id', userId),
+      db.from('npc_conversations').delete().eq('user_id', userId),
     ])
 
     // Reset game_state to a clean base so gameEngine delta starts fresh
