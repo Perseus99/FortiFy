@@ -3,11 +3,13 @@ import { VALID_CATEGORIES } from '@/lib/types'
 import type { FinancialProfile, SpendingCategory, Transaction } from '@/lib/types'
 
 export async function runAnalystAgent(
-  userId: string, token: string
+  userId: string, token: string, sinceDate?: string
 ): Promise<FinancialProfile> {
   const db = createAuthClient(token)
 
-  const { data: txns } = await db.from('transactions').select('*').eq('user_id', userId)
+  let query = db.from('transactions').select('*').eq('user_id', userId)
+  if (sinceDate) query = query.gte('transaction_date', sinceDate)
+  const { data: txns } = await query
   const purchases = txns ?? []
 
   const incomeTotal = purchases

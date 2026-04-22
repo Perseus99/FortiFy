@@ -1,6 +1,6 @@
 FORTIFY BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
-Statement Period: Current Week, Days 1–2
+Statement Period: Apr 1 – Apr 7, 2026
 Demo Scenario: Week 1 — High food and subscription spend
 
 ================================================================
@@ -9,19 +9,19 @@ TRANSACTIONS
 
 Date        Merchant                        Category          Amount
 ------------------------------------------------------------------------
-Day 1       Direct Deposit — Paycheck       Income            $2,800.00
-Day 1       Netflix                         Subscriptions       $15.49
-Day 1       Adobe Creative Cloud            Subscriptions       $54.99
-Day 1       Starbucks Coffee                Food                 $6.50
-Day 1       Shell Gas Station               Transport           $45.00
-Day 2       Local Grill & Bistro            Food                $67.50
-Day 2       Amazon Marketplace              Shopping            $78.99
-Day 2       Chipotle Restaurant             Food                $38.50
-Day 2       Spotify                         Subscriptions        $9.99
-Day 2       Uber Eats                       Food                $34.99
-Day 2       Target Store                    Shopping            $67.00
-Day 2       Cinema Tickets                  Entertainment       $18.00
-Day 2       Starbucks Coffee                Food                 $6.50
+Apr 1       Direct Deposit — Paycheck       Income            $2,800.00
+Apr 1       Netflix                         Subscriptions       $15.49
+Apr 1       Adobe Creative Cloud            Subscriptions       $54.99
+Apr 1       Starbucks Coffee                Food                 $6.50
+Apr 1       Shell Gas Station               Transport           $45.00
+Apr 2       Local Grill & Bistro            Food                $67.50
+Apr 2       Amazon Marketplace              Shopping            $78.99
+Apr 2       Chipotle Restaurant             Food                $38.50
+Apr 2       Spotify                         Subscriptions        $9.99
+Apr 2       Uber Eats                       Food                $34.99
+Apr 3       Target Store                    Shopping            $67.00
+Apr 3       Cinema Tickets                  Entertainment       $18.00
+Apr 3       Starbucks Coffee                Food                 $6.50
 
 ================================================================
 SUMMARY
@@ -34,13 +34,7 @@ Net:               +$2,356.55
 NOTES FOR DEMO
 ================================================================
 - Food spend is high (Starbucks daily + 2 restaurants + Uber Eats)
-- 3 subscriptions hit on Day 1 ($80.47 combined)
+- 3 subscriptions hit on Apr 1 ($80.47 combined)
 - Goal Agent should flag food or subscriptions as the risky category
 - NPCs: Warden and Scout will have strong reactions to food delivery + subscription stack
-
-HOW TO CREATE PDF:
-1. Copy this text into Google Docs / Word
-2. Format as a simple table (optional)
-3. Export/Print to PDF
-4. Upload using the "Week 1" period option
 ================================================================

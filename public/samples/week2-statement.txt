@@ -1,7 +1,7 @@
 FORTIFY BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
-Statement Period: Current Week (Week 2 — Improved Behavior)
-Demo Scenario: Week 2 — Spending is better; NPCs see Week 1 history
+Statement Period: Apr 8 – Apr 14, 2026
+Demo Scenario: Week 2 — Improved behaviour; NPCs reference Week 1 history
 
 ================================================================
 TRANSACTIONS
@@ -9,20 +9,20 @@ TRANSACTIONS
 
 Date        Merchant                        Category          Amount
 ------------------------------------------------------------------------
-Day 1       Direct Deposit — Paycheck       Income            $2,800.00
-Day 1       Corner Café                     Food                 $4.50
-Day 1       Shell Gas Station               Transport           $40.00
-Day 1       Trader Joe's                    Food                $87.00
-Day 2       Corner Café                     Food                 $4.50
-Day 2       Lyft                            Transport           $11.00
-Day 2       Chipotle Restaurant             Food                $22.00
-Day 2       Target Store                    Shopping            $45.00
-Day 3       Corner Café                     Food                 $4.50
-Day 3       Cinema Tickets                  Entertainment       $16.00
-Day 3       CVS Pharmacy                    Shopping            $18.00
-Day 3       Verizon Phone Bill              Utilities           $85.00
-Day 4       Trader Joe's                    Food                $68.00
-Day 4       Corner Café                     Food                 $4.50
+Apr 8       Direct Deposit — Paycheck       Income            $2,800.00
+Apr 8       Corner Café                     Food                 $4.50
+Apr 8       Shell Gas Station               Transport           $40.00
+Apr 8       Trader Joe's                    Food                $87.00
+Apr 9       Corner Café                     Food                 $4.50
+Apr 9       Lyft                            Transport           $11.00
+Apr 9       Chipotle Restaurant             Food                $22.00
+Apr 9       Target Store                    Shopping            $45.00
+Apr 10      Corner Café                     Food                 $4.50
+Apr 10      Cinema Tickets                  Entertainment       $16.00
+Apr 10      CVS Pharmacy                    Shopping            $18.00
+Apr 10      Verizon Phone Bill              Utilities           $85.00
+Apr 11      Trader Joe's                    Food                $68.00
+Apr 11      Corner Café                     Food                 $4.50
 
 ================================================================
 SUMMARY
@@ -34,21 +34,11 @@ Net:               +$2,391.00
 ================================================================
 NOTES FOR DEMO
 ================================================================
-- No Uber Eats / DoorDash — switched to grocery shopping
-- Starbucks ($6.50) replaced with Corner Café ($4.50) — cheaper
+- No Uber Eats / DoorDash — switched to groceries
+- Starbucks ($6.50) replaced with Corner Café ($4.50)
 - No subscription stack this week
-- No Amazon impulse purchases
-- SERVER will automatically seed a completed Week 1 goal:
-    Category: Food | Target: $350 | Actual: $287 | Score: 72
-  This gives NPCs playerHistory to reference in their responses.
-- Warden/Scout will acknowledge improvement over "last week"
-- Architect will have a more positive savings assessment
-- Great for showing NPC memory and the week-over-week narrative
-
-HOW TO CREATE PDF:
-1. Copy this text into Google Docs / Word
-2. Export/Print to PDF
-3. Upload using the "Week 2" period option
-4. Note: You do NOT need to include Week 1 transactions — the server
-   handles Week 1 history automatically when Week 2 is selected.
+- NPCs will reference the real Week 1 goal result (not a fake seed)
+  if Week 1 was uploaded first
+- Warden/Scout acknowledge improvement; Architect gives a positive assessment
+- Upload using the "Week 2" period option
 ================================================================
