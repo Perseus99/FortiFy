@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [skipUsed, setSkipUsed]       = useState(false)
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
   const [showUpload, setShowUpload]   = useState(false)
+  const [lastGoal, setLastGoal]       = useState<WeeklyGoal | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -32,7 +33,7 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: gs }, { data: wg }, { data: txns }, { count: skipCount }] = await Promise.all([
+      const [{ data: gs }, { data: wg }, { data: txns }, { count: skipCount }, { data: lg }] = await Promise.all([
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
@@ -40,11 +41,14 @@ export default function DashboardPage() {
           .order('transaction_date', { ascending: false }).limit(100),
         supabase.from('category_preferences').select('id', { count: 'exact', head: true })
           .eq('user_id', user.id).eq('dismissed', true),
+        supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', true)
+          .order('created_at', { ascending: false }).limit(1).single(),
       ])
 
       if (gs) setGameState(gs)
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
+      if (lg) setLastGoal(lg)
       setSkipUsed((skipCount ?? 0) >= 1)
       setLoading(false)
     }
@@ -191,6 +195,39 @@ export default function DashboardPage() {
             <p className="text-red-400 font-semibold text-sm">⚠ Your fortress has fallen</p>
             <p className="text-gray-400 text-xs mt-1">Sync your data to rebuild defenses and restore city HP for next week's battle.</p>
           </div>
+        )}
+
+        {/* Last week's goal result */}
+        {transactions.length > 0 && (
+          lastGoal ? (() => {
+            const met = lastGoal.actual_spent <= lastGoal.goal_amount
+            const label = lastGoal.goal_label ?? `${lastGoal.goal_category} goal`
+            const diff = Math.abs(lastGoal.actual_spent - lastGoal.goal_amount)
+            return (
+              <div className={`rounded-lg px-4 py-3 border flex items-center gap-3 text-sm ${
+                met
+                  ? 'bg-green-950/40 border-green-800'
+                  : 'bg-red-950/40 border-red-800'
+              }`}>
+                <span className="text-lg">{met ? '✅' : '❌'}</span>
+                <div>
+                  <span className={`font-semibold ${met ? 'text-green-400' : 'text-red-400'}`}>
+                    {met ? 'Last goal met' : 'Last goal missed'}
+                  </span>
+                  <span className="text-gray-400 ml-2">{label}</span>
+                  <span className="text-gray-500 ml-2 text-xs">
+                    ${lastGoal.actual_spent.toFixed(0)} / ${lastGoal.goal_amount.toFixed(0)}
+                    {met ? ` · $${diff.toFixed(0)} under` : ` · $${diff.toFixed(0)} over`}
+                  </span>
+                </div>
+              </div>
+            )
+          })() : (
+            <div className="rounded-lg px-4 py-3 border border-gray-800 bg-gray-900/50 flex items-center gap-3 text-sm">
+              <span className="text-lg">🏁</span>
+              <span className="text-gray-500">No goals yet — upload a statement to get started</span>
+            </div>
+          )
         )}
 
         {/* No-data empty state */}
