@@ -34,7 +34,7 @@ export default function GamePage() {
 
       const [{ data: gs }, { data: wc }] = await Promise.all([
         supabase.from('game_state')
-          .select('week_start_points,week_start_health,week_number,best_points_week,best_health_week,plays_this_week')
+          .select('points,city_health,week_start_points,week_start_health,week_number,best_points_week,best_health_week,plays_this_week')
           .eq('user_id', user.id).single(),
         supabase.from('wave_config').select('*').eq('user_id', user.id)
           .order('week_number', { ascending: false }).limit(1).single(),
@@ -51,8 +51,8 @@ export default function GamePage() {
         plays_this_week:   gs?.plays_this_week   ?? 0,
       })
       setInitData({
-        points:     gs?.week_start_points ?? 0,
-        cityHealth: gs?.week_start_health ?? 100,
+        points:     gs?.week_start_points || gs?.points || 0,
+        cityHealth: gs?.week_start_health || gs?.city_health || 100,
         waveConfig: weekWc ?? wc ?? DEFAULT_WAVE,
       })
       setLoading(false)
