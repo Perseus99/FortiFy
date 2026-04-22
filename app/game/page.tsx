@@ -21,6 +21,7 @@ export default function GamePage() {
   const router = useRouter()
   const [initData, setInitData]   = useState<GameInitData | null>(null)
   const [userId, setUserId]       = useState<string | null>(null)
+  const [gsData, setGsData]       = useState<{ best_points_week: number; best_health_week: number; plays_this_week: number } | null>(null)
   const [loading, setLoading]     = useState(true)
   const [result, setResult]       = useState<{ won: boolean; points: number; cityHealth: number } | null>(null)
   const [activeNPC, setActiveNPC] = useState<NPCType | null>(null)
@@ -32,20 +33,26 @@ export default function GamePage() {
       setUserId(user.id)
 
       const [{ data: gs }, { data: wc }] = await Promise.all([
-        supabase.from('game_state').select('points,city_health,week_number').eq('user_id', user.id).single(),
+        supabase.from('game_state')
+          .select('week_start_points,week_start_health,week_number,best_points_week,best_health_week,plays_this_week')
+          .eq('user_id', user.id).single(),
         supabase.from('wave_config').select('*').eq('user_id', user.id)
           .order('week_number', { ascending: false }).limit(1).single(),
       ])
 
-      // If a specific week was selected, load that week's wave config
       const weekNum = gs?.week_number
       const { data: weekWc } = weekNum
         ? await supabase.from('wave_config').select('*').eq('user_id', user.id).eq('week_number', weekNum).single()
         : { data: null }
 
+      setGsData({
+        best_points_week:  gs?.best_points_week  ?? 0,
+        best_health_week:  gs?.best_health_week  ?? 0,
+        plays_this_week:   gs?.plays_this_week   ?? 0,
+      })
       setInitData({
-        points:     Math.max(gs?.points ?? 0, 250),
-        cityHealth: gs?.city_health ?? 100,
+        points:     gs?.week_start_points ?? 0,
+        cityHealth: gs?.week_start_health ?? 100,
         waveConfig: weekWc ?? wc ?? DEFAULT_WAVE,
       })
       setLoading(false)
@@ -56,10 +63,21 @@ export default function GamePage() {
   async function handleGameOver(res: { won: boolean; points: number; cityHealth: number }) {
     setResult(res)
     if (!userId) return
-    await supabase.from('game_state').upsert(
-      { user_id: userId, points: res.points, city_health: res.cityHealth },
-      { onConflict: 'user_id' }
-    )
+
+    const currentBest = gsData?.best_points_week ?? 0
+    const isNewBest   = res.points > currentBest
+
+    const update: Record<string, number> = {
+      plays_this_week: (gsData?.plays_this_week ?? 0) + 1,
+    }
+    if (isNewBest) {
+      update.best_points_week = res.points
+      update.best_health_week = res.cityHealth
+      update.points           = res.points
+      update.city_health      = res.cityHealth
+    }
+
+    await supabase.from('game_state').update(update).eq('user_id', userId)
   }
 
   function openPostGameNPC(type?: NPCType) {

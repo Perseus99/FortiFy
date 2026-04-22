@@ -1,3 +1,17 @@
+// Score = how well you met your specific category goal + savings rate
+// withinGoal: 1.0 if under budget, scales down if over
+// savingsRate: (income - totalSpend) / income
+export function calculateScore(
+  categorySpend: number,
+  goalAmount: number,
+  totalSpent: number,
+  totalIncome: number,
+): number {
+  const withinGoal  = categorySpend <= goalAmount ? 1 : goalAmount / categorySpend
+  const savingsRate = totalIncome > 0 ? Math.max(0, (totalIncome - totalSpent) / totalIncome) : 0
+  return Math.max(0, Math.min(100, Math.round((withinGoal * 0.6 + savingsRate * 0.4) * 100)))
+}
+
 export function isoWeekStart(date: Date): string {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
   const day = d.getUTCDay()

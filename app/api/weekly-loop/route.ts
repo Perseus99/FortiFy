@@ -4,7 +4,7 @@ import { runGameEngineAgent } from '@/agents/gameEngine'
 import { runGoalAgent } from '@/agents/goalAgent'
 import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
-import { isoWeekStart } from '@/lib/utils'
+import { isoWeekStart, calculateScore } from '@/lib/utils'
 
 export const maxDuration = 300
 
@@ -31,15 +31,11 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single()
 
-    const goalAmount = goal?.goal_amount ?? 3000
-
     const today = new Date()
     const weekStartStr = isoWeekStart(today)
-    // A new week has turned if the current ISO Monday differs from the last goal's week_start_date
     const calendarWeekTurned = !goal || goal.week_start_date !== weekStartStr
 
-    // Analyst computes FinancialProfile from all transactions (goal-closing moved to weekly-loop below)
-    const financialProfile = await runAnalystAgent(userId, goalAmount, token)
+    const financialProfile = await runAnalystAgent(userId, token)
 
     const { data: gameState } = await db.from('game_state')
       .select('week_number')
@@ -67,7 +63,6 @@ export async function POST(req: NextRequest) {
     let goalAchieved = false
 
     if (calendarWeekTurned && goal?.goal_category && goal?.goal_amount) {
-      // Spend within the CLOSED week's date range only (not all-time)
       const weekCatTotals: Record<string, number> = {}
       savedTxns?.forEach(t => {
         if (!t.category || t.category === 'income' || !t.transaction_date) return
@@ -77,6 +72,10 @@ export async function POST(req: NextRequest) {
 
       const categorySpend = weekCatTotals[goal.goal_category] ?? 0
       const missRatio = categorySpend / goal.goal_amount
+      const closingScore = calculateScore(
+        categorySpend, goal.goal_amount,
+        financialProfile.total_spent, financialProfile.total_income,
+      )
 
       if (missRatio <= 1.0) {
         goalAchieved = true
@@ -90,27 +89,21 @@ export async function POST(req: NextRequest) {
         goalHealthDelta = missRatio >= 1.5 ? -20 : -10
       }
 
-      // Close the goal with week-accurate category spend and the analyst's score
       await db.from('weekly_goals')
-        .update({ actual_spent: categorySpend, score: financialProfile.score, completed: true })
+        .update({ actual_spent: categorySpend, score: closingScore, completed: true })
         .eq('user_id', userId)
         .eq('completed', false)
         .eq('week_start_date', goal.week_start_date)
     }
 
-    // ── New goal ─────────────────────────────────────────────────────────────
-    // Create when: (a) calendar week turned, or (b) active goal has no category yet
-    // Case (b) handles first sync after setup where the seeded goal has no goal_category
     const needsNewGoal = calendarWeekTurned || !goal?.goal_category
 
     if (needsNewGoal) {
-      // Close any remaining incomplete goals (e.g. orphaned seeded goal with no category)
       await db.from('weekly_goals')
-        .update({ completed: true, score: financialProfile.score })
+        .update({ completed: true })
         .eq('user_id', userId)
         .eq('completed', false)
 
-      // Load dismissed categories and player history in parallel
       const [{ data: prefs }, playerHistory] = await Promise.all([
         db.from('category_preferences').select('category').eq('user_id', userId).eq('dismissed', true),
         buildPlayerContext(userId, token),
@@ -136,20 +129,28 @@ export async function POST(req: NextRequest) {
         goal_amount: goalResult.goal_amount,
         goal_category: goalResult.goal_category,
         goal_label: goalResult.goal_label,
-        actual_spent: 0,
+        actual_spent: catTotals[goalResult.goal_category] ?? 0,
         score: 0,
         completed: false,
       })
     }
 
+    // Score for wave difficulty: category spend vs active goal
+    const activeGoalCategory = goal?.goal_category ?? ''
+    const activeCategorySpend = catTotals[activeGoalCategory] ?? 0
+    const waveScore = calculateScore(
+      activeCategorySpend, goal?.goal_amount ?? 3000,
+      financialProfile.total_spent, financialProfile.total_income,
+    )
+
     const waveConfig = await runGameEngineAgent(
-      userId, financialProfile.score, nextWeek, token,
+      userId, waveScore, nextWeek, token,
       { points: goalPointsDelta, health: goalHealthDelta }
     )
 
-    // Keep active goal's score current so dashboard shows live score each sync
+    // Keep active goal's score current
     await db.from('weekly_goals')
-      .update({ score: financialProfile.score })
+      .update({ score: waveScore })
       .eq('user_id', userId)
       .eq('completed', false)
 

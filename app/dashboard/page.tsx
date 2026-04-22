@@ -236,12 +236,15 @@ export default function DashboardPage() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Points</p>
-            <p className="text-3xl font-bold text-amber-400">{gameState?.points ?? 0}</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Best Points</p>
+            <p className="text-3xl font-bold text-amber-400">{gameState?.best_points_week ?? gameState?.points ?? 0}</p>
+            {(gameState?.plays_this_week ?? 0) > 0 && (
+              <p className="text-gray-600 text-xs mt-1">{gameState!.plays_this_week} play{gameState!.plays_this_week === 1 ? '' : 's'} this week</p>
+            )}
           </div>
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">City HP</p>
-            <p className="text-3xl font-bold text-red-400">{gameState?.city_health ?? 100}</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Best City HP</p>
+            <p className="text-3xl font-bold text-red-400">{gameState?.best_health_week ?? gameState?.city_health ?? 100}</p>
           </div>
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
             <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">Week Score</p>

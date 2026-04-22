@@ -4,12 +4,11 @@ import { runGameEngineAgent, scoreToWaveParams } from '@/agents/gameEngine'
 import { runGoalAgent } from '@/agents/goalAgent'
 import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
-import { isoWeekStart, addDays } from '@/lib/utils'
+import { isoWeekStart, addDays, calculateScore } from '@/lib/utils'
 import type { ParsedTxn, Period } from '@/lib/types'
 
 export const maxDuration = 300
 
-// Spread transactions across the window for the given period (all within current week)
 function assignDates(txns: ParsedTxn[], period: Period, currentMonday: string): (ParsedTxn & { transaction_date: string })[] {
   const dayCount = period === 'week1' ? 3 : 5
   return txns.map((t, i) => ({
@@ -34,32 +33,51 @@ export async function POST(req: NextRequest) {
 
     const db = createAuthClient(token)
 
-    const today          = new Date()
-    const currentMonday  = isoWeekStart(today)
-    const lastMonday     = addDays(currentMonday, -7)
-    const weekNumber     = period === 'week2' ? 2 : 1
-    const isNewWeek      = period === 'week2'
+    const today         = new Date()
+    const currentMonday = isoWeekStart(today)
+    const lastMonday    = addDays(currentMonday, -7)
+    const weekNumber    = period === 'week2' ? 2 : 1
+    const isNewWeek     = period === 'week2'
 
-    // Assign dates and compute the date range this statement covers
-    const dated = assignDates(transactions, period, currentMonday)
+    const dated       = assignDates(transactions, period, currentMonday)
     const sortedDates = dated.map(t => t.transaction_date).sort()
     const rangeStart  = sortedDates[0]
     const rangeEnd    = sortedDates[sortedDates.length - 1]
 
-    // Always clear NPC conversations — context has changed
+    // Always clear NPC conversations so NPCs open fresh with new data
     await db.from('npc_conversations').delete().eq('user_id', userId)
 
     if (isNewWeek) {
-      // Week 2 = new game week: wipe all goals and reset game state from scratch
+      // Read best from the week just ended to carry it forward
+      const { data: prevGs } = await db.from('game_state')
+        .select('best_points_week, best_health_week')
+        .eq('user_id', userId).maybeSingle()
+
+      const carryPoints = prevGs?.best_points_week ?? 0
+      const carryHealth = Math.max(prevGs?.best_health_week ?? 100, 50)
+
       await Promise.all([
         db.from('transactions').delete().eq('user_id', userId)
           .gte('transaction_date', rangeStart).lte('transaction_date', rangeEnd),
         db.from('weekly_goals').delete().eq('user_id', userId),
       ])
-      await db.from('game_state').upsert(
-        { user_id: userId, points: 0, city_health: 100, week_number: weekNumber, level: 1, towers_placed: [], updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      )
+
+      // Reset game state, carrying forward last week's best result as the new baseline
+      await db.from('game_state').upsert({
+        user_id: userId,
+        points: carryPoints,
+        city_health: carryHealth,
+        week_number: weekNumber,
+        level: 1,
+        towers_placed: [],
+        week_start_points: carryPoints,
+        week_start_health: carryHealth,
+        best_points_week: 0,
+        best_health_week: 0,
+        plays_this_week: 0,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+
       // Seed a completed Week 1 goal so NPCs have playerHistory to reference
       await db.from('weekly_goals').insert({
         user_id: userId,
@@ -72,17 +90,21 @@ export async function POST(req: NextRequest) {
         completed: true,
       })
     } else {
-      // Same week (W1 or W1½): date-range merge — only replace transactions that overlap
+      // Same week: date-range merge — only replace transactions that overlap
       await db.from('transactions').delete().eq('user_id', userId)
         .gte('transaction_date', rangeStart).lte('transaction_date', rangeEnd)
 
-      // Initialize game_state only if this is the very first upload
+      // Initialize game_state only if this is the very first upload ever
       const { data: existingGs } = await db.from('game_state')
         .select('user_id').eq('user_id', userId).maybeSingle()
       if (!existingGs) {
         await db.from('game_state').insert({
-          user_id: userId, points: 0, city_health: 100, week_number: weekNumber,
-          level: 1, towers_placed: [], updated_at: new Date().toISOString(),
+          user_id: userId,
+          points: 0, city_health: 100, week_number: weekNumber,
+          level: 1, towers_placed: [],
+          week_start_points: 0, week_start_health: 100,
+          best_points_week: 0, best_health_week: 0, plays_this_week: 0,
+          updated_at: new Date().toISOString(),
         })
       }
     }
@@ -94,11 +116,11 @@ export async function POST(req: NextRequest) {
       category: (t.category ?? 'other').toLowerCase(),
     })))
 
-    // Run analyst on ALL transactions now in the DB (post-merge view)
-    const financialProfile = await runAnalystAgent(userId, 3000, token)
+    // Pass 1: analyst gets financial data from all transactions now in DB
+    const financialProfile = await runAnalystAgent(userId, token)
     const playerHistory    = await buildPlayerContext(userId, token)
 
-    // Check if an active goal already exists for this week
+    // Check for existing active goal this week
     const { data: existingGoal } = await db.from('weekly_goals')
       .select('*')
       .eq('user_id', userId)
@@ -109,21 +131,28 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (existingGoal) {
-      // Mid-week upload: keep the goal, refresh actual_spent and score from merged data
-      const cats = financialProfile.categories as Record<string, number>
+      // Mid-week upload: refresh actual_spent and score from merged data, keep goal
+      const cats        = financialProfile.categories as Record<string, number>
       const actualSpent = cats[existingGoal.goal_category] ?? 0
+      const score       = calculateScore(
+        actualSpent,
+        existingGoal.goal_amount,
+        financialProfile.total_spent,
+        financialProfile.total_income,
+      )
+
       await db.from('weekly_goals')
-        .update({ actual_spent: actualSpent, score: financialProfile.score })
+        .update({ actual_spent: actualSpent, score })
         .eq('id', existingGoal.id)
 
-      // Update wave difficulty for the new score — but don't re-award points
-      const params = scoreToWaveParams(financialProfile.score)
+      // Update wave difficulty for the new score — no point re-award on mid-week uploads
+      const params = scoreToWaveParams(score)
       await db.from('wave_config').upsert(
-        { user_id: userId, week_number: weekNumber, financial_score: financialProfile.score, ...params },
+        { user_id: userId, week_number: weekNumber, financial_score: score, ...params },
         { onConflict: 'user_id,week_number' }
       )
     } else {
-      // First upload of this week: run goal agent and award points via game engine
+      // Pass 2: first upload of week — goalAgent picks the category goal
       const goalResult = await runGoalAgent({
         categories: financialProfile.categories as Record<string, number>,
         flaggedTransactions: financialProfile.flagged_transactions.map(t => ({
@@ -137,22 +166,57 @@ export async function POST(req: NextRequest) {
         playerHistory,
       })
 
-      const cats = financialProfile.categories as Record<string, number>
+      // Score is now based on the actual goal category spend vs goal amount
+      const cats        = financialProfile.categories as Record<string, number>
+      const actualSpent = cats[goalResult.goal_category] ?? 0
+      const score       = calculateScore(
+        actualSpent,
+        goalResult.goal_amount,
+        financialProfile.total_spent,
+        financialProfile.total_income,
+      )
+
       await db.from('weekly_goals').insert({
         user_id: userId,
         week_start_date: currentMonday,
         goal_amount:   goalResult.goal_amount,
         goal_category: goalResult.goal_category,
         goal_label:    goalResult.goal_label,
-        actual_spent:  cats[goalResult.goal_category] ?? 0,
-        score:         financialProfile.score,
-        completed:     false,
+        actual_spent:  actualSpent,
+        score,
+        completed: false,
       })
 
-      await runGameEngineAgent(userId, financialProfile.score, weekNumber, token, { points: 0, health: 0 })
+      // Award points for first upload and set wave difficulty
+      await runGameEngineAgent(userId, score, weekNumber, token, { points: 0, health: 0 })
+
+      // Snapshot week_start from post-gameEngine game_state so the game loads correctly
+      const { data: freshGs } = await db.from('game_state')
+        .select('points, city_health').eq('user_id', userId).single()
+      await db.from('game_state').update({
+        week_start_points: freshGs?.points    ?? 0,
+        week_start_health: freshGs?.city_health ?? 100,
+        best_points_week: 0,
+        best_health_week: 0,
+        plays_this_week:  0,
+      }).eq('user_id', userId)
     }
 
-    return NextResponse.json({ ok: true, score: financialProfile.score, weekNumber })
+    // For W2: update week_start after gameEngine ran (carry + upload reward)
+    if (isNewWeek) {
+      const { data: freshGs } = await db.from('game_state')
+        .select('points, city_health').eq('user_id', userId).single()
+      await db.from('game_state').update({
+        week_start_points: freshGs?.points      ?? 0,
+        week_start_health: freshGs?.city_health ?? 100,
+      }).eq('user_id', userId)
+    }
+
+    const { data: finalGoal } = await db.from('weekly_goals')
+      .select('score').eq('user_id', userId).eq('completed', false)
+      .order('created_at', { ascending: false }).limit(1).single()
+
+    return NextResponse.json({ ok: true, score: finalGoal?.score ?? 0, weekNumber })
   } catch (err: any) {
     console.error('[confirm-statement]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

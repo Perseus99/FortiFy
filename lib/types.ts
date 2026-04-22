@@ -13,6 +13,11 @@ export type GameState = {
   level: number
   towers_placed: TowerPlacement[]
   updated_at: string
+  week_start_points: number
+  week_start_health: number
+  best_points_week: number
+  best_health_week: number
+  plays_this_week: number
 }
 
 export type TowerPlacement = {
@@ -76,7 +81,6 @@ export interface ParsedTxn {
 }
 
 export type FinancialProfile = {
-  score: number
   total_spent: number
   total_income: number
   categories: Record<SpendingCategory, number>
