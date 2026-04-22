@@ -1,4 +1,4 @@
--- FortifyFi Database Schema
+-- FortiFi Database Schema
 -- Run this in Supabase SQL Editor: supabase.com → your project → SQL Editor → New Query
 -- After this file, also run: functions.sql, then npc_conversations.sql
 

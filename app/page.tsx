@@ -7,7 +7,7 @@ export default function Home() {
       {/* Hero */}
       <div className="flex flex-col items-center justify-center px-4 pt-24 pb-16 text-center">
         <div className="text-6xl mb-6">🏰</div>
-        <h1 className="text-6xl font-bold text-amber-400 mb-3 tracking-tight">FortifyFi</h1>
+        <h1 className="text-6xl font-bold text-amber-400 mb-3 tracking-tight">FortiFi</h1>
         <p className="text-gray-300 text-xl mb-2">Your finances. Your fortress.</p>
         <p className="text-gray-500 text-sm max-w-md mb-10">
           A tower defense game where your weekly spending habits determine how hard the enemy waves hit.

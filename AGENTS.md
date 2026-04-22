@@ -1,4 +1,4 @@
-# Agent instructions for FortifyFi
+# Agent instructions for FortiFi
 
 ## Next.js version note
 
@@ -6,7 +6,7 @@ This project uses Next.js 16 with the App Router. APIs and conventions may diffe
 
 ## Project context
 
-FortifyFi is a tower defense game driven by real financial data. The architecture has two layers of "agents":
+FortiFi is a tower defense game driven by real financial data. The architecture has two layers of "agents":
 
 1. **In-game AI agents** (`agents/` directory) — Claude Haiku-powered modules that analyze spending, set goals, and role-play NPCs
 2. **Game logic** (`components/game/GameScene.ts`) — Phaser 3 scene, not AI

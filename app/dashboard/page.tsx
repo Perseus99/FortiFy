@@ -175,7 +175,7 @@ export default function DashboardPage() {
       )}
       {/* Nav */}
       <nav className="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-amber-400">FortifyFi</h1>
+        <h1 className="text-xl font-bold text-amber-400">FortiFi</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-400 text-sm">{email}</span>
           <button onClick={handleReset} className="text-sm text-gray-600 hover:text-red-400 transition-colors">
@@ -233,7 +233,7 @@ export default function DashboardPage() {
         {/* No-data empty state */}
         {transactions.length === 0 && !goal && (
           <div className="bg-amber-950/50 border border-amber-600 rounded-lg p-5">
-            <h2 className="text-amber-400 font-bold text-lg mb-1">Welcome to FortifyFi!</h2>
+            <h2 className="text-amber-400 font-bold text-lg mb-1">Welcome to FortiFi!</h2>
             <p className="text-gray-300 text-sm mb-4">
               Upload your bank statement to generate a spending goal and unlock the game.
             </p>

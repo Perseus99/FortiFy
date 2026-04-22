@@ -1,4 +1,4 @@
-# FortifyFi
+# FortiFi
 
 A tower defense game where your real spending habits determine how hard the enemy waves hit. Save more, defend better.
 

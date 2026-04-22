@@ -1,4 +1,4 @@
-# Contributing to FortifyFi
+# Contributing to FortiFi
 
 This guide is for teammates joining the project. It covers getting the app running locally, understanding the codebase, and deploying changes.
 

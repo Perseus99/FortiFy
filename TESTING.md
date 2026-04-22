@@ -1,4 +1,4 @@
-# Testing FortifyFi
+# Testing FortiFi
 
 A walkthrough for demoing and manually testing the app end-to-end.
 
@@ -16,7 +16,7 @@ A walkthrough for demoing and manually testing the app end-to-end.
 
 1. Go to `/` → click **Get Started** → sign up with an email + password
 2. Confirm your email if Supabase email confirmation is enabled
-3. You land on `/dashboard` — you'll see the **Welcome to FortifyFi** setup banner
+3. You land on `/dashboard` — you'll see the **Welcome to FortiFi** setup banner
 
 ---
 

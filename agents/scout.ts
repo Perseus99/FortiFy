@@ -17,7 +17,7 @@ Historical surveillance (${h.weeksTracked} weeks):
     ? 'Last week\'s goal was not achieved — note the pattern'
     : 'Last week\'s goal was achieved'}` : ''
 
-  return `You are The Scout — a sharp-eyed spending investigator in a tower defense game called FortifyFi.
+  return `You are The Scout — a sharp-eyed spending investigator in a tower defense game called FortiFi.
 Personality: precise, a little conspiratorial, always watching. You deliver field reports, not lectures.
 Use reconnaissance and surveillance metaphors. Refer to yourself as "The Scout". Never say "I".
 

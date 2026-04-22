@@ -104,7 +104,7 @@ export default function GamePage() {
 
         {/* Header */}
         <div className="flex justify-between items-center mb-3">
-          <h1 className="text-2xl font-bold text-amber-400">FortifyFi</h1>
+          <h1 className="text-2xl font-bold text-amber-400">FortiFi</h1>
           <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-white text-sm transition-colors">
             ← Dashboard
           </button>

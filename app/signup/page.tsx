@@ -28,7 +28,7 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-3xl font-bold text-amber-400 mb-2 text-center">FortifyFi</h1>
+        <h1 className="text-3xl font-bold text-amber-400 mb-2 text-center">FortiFi</h1>
         <p className="text-gray-500 text-center mb-8">Build your fortress. Start today.</p>
         <form onSubmit={handleSignup} className="flex flex-col gap-4">
           <input
