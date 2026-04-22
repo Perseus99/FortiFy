@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAuthClient } from '@/lib/supabase'
 import { runGoalAgent } from '@/agents/goalAgent'
 import { buildPlayerContext } from '@/agents/contextAgent'
-import { isoWeekStart } from '@/lib/utils'
 
 export const maxDuration = 60
 
@@ -60,16 +59,26 @@ export async function POST(req: NextRequest) {
       playerHistory,
     })
 
+    // Find the active goal's tracking start before closing it
+    const { data: activeGoal } = await db.from('weekly_goals')
+      .select('week_start_date')
+      .eq('user_id', userId)
+      .eq('completed', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const trackingStart = activeGoal?.week_start_date ?? new Date().toISOString().split('T')[0]
+
     // Mark current open goal completed and insert the recalculated one
     await db.from('weekly_goals')
       .update({ completed: true })
       .eq('user_id', userId)
       .eq('completed', false)
 
-    const weekStartStr = isoWeekStart(new Date())
     const { data: newGoal } = await db.from('weekly_goals').insert({
       user_id: userId,
-      week_start_date: weekStartStr,
+      week_start_date: trackingStart,
       goal_amount: goalResult.goal_amount,
       goal_category: goalResult.goal_category,
       goal_label: goalResult.goal_label,

@@ -82,6 +82,10 @@ export async function POST(req: NextRequest) {
 
     // Always clear NPC conversations so every upload gets fresh context
     await db.from('npc_conversations').delete().eq('user_id', userId)
+    // Reset skip-preferences at the start of each new game week
+    if (isNewGameWeek) {
+      await db.from('category_preferences').delete().eq('user_id', userId)
+    }
 
     // Date-range merge: replace only what the incoming statement covers
     await db.from('transactions').delete().eq('user_id', userId)

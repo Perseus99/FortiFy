@@ -18,10 +18,10 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading]     = useState(true)
   const [activeNPC, setActiveNPC] = useState<NPCType | null>(null)
-  const [syncing, setSyncing]       = useState(false)
-  const [syncMsg, setSyncMsg]       = useState('')
-  const [needsSetup, setNeedsSetup] = useState(false)
-  const [dismissing, setDismissing] = useState(false)
+  const [syncing, setSyncing]         = useState(false)
+  const [syncMsg, setSyncMsg]         = useState('')
+  const [dismissing, setDismissing]   = useState(false)
+  const [skipUsed, setSkipUsed]       = useState(false)
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
   const [showUpload, setShowUpload]   = useState(false)
 
@@ -32,18 +32,20 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: gs }, { data: wg }, { data: txns }] = await Promise.all([
+      const [{ data: gs }, { data: wg }, { data: txns }, { count: skipCount }] = await Promise.all([
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
         supabase.from('transactions').select('*').eq('user_id', user.id)
           .order('transaction_date', { ascending: false }).limit(100),
+        supabase.from('category_preferences').select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id).eq('dismissed', true),
       ])
 
-      if (!txns || txns.length === 0) setNeedsSetup(true)
       if (gs) setGameState(gs)
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
+      setSkipUsed((skipCount ?? 0) >= 1)
       setLoading(false)
     }
     load()
@@ -52,39 +54,6 @@ export default function DashboardPage() {
   async function getToken(): Promise<string | null> {
     const { data: { session } } = await supabase.auth.getSession()
     return session?.access_token ?? null
-  }
-
-  async function handleSetup() {
-    if (!userId) return
-    setSyncing(true)
-    setSyncMsg('Setting up your account...')
-    const token = await getToken()
-    if (!token) { setSyncMsg('Not authenticated'); setSyncing(false); return }
-
-    const res = await fetch('/api/seed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ userId }),
-    })
-    if (res.ok) {
-      setSyncMsg('Running financial analysis (this takes ~30s)...')
-      const loop = await fetch('/api/weekly-loop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ userId }),
-      })
-      if (loop.ok) {
-        setSyncMsg('Done! Reloading...')
-        setTimeout(() => window.location.reload(), 3000)
-      } else {
-        const err = await loop.json()
-        setSyncMsg(`Analysis failed: ${err.error}`)
-      }
-    } else {
-      const err = await res.json()
-      setSyncMsg(`Setup failed: ${err.error}`)
-    }
-    setSyncing(false)
   }
 
   async function handleSync() {
@@ -129,6 +98,7 @@ export default function DashboardPage() {
     if (res.ok) {
       const { goal: newGoal } = await res.json()
       setGoal(newGoal)
+      setSkipUsed(true)
     }
     setDismissing(false)
   }
@@ -216,32 +186,31 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
         {/* HP = 0 rebuild banner */}
-        {!needsSetup && gameState?.city_health === 0 && (
+        {gameState?.city_health === 0 && (
           <div className="bg-red-950/50 border border-red-700 rounded-lg p-4">
             <p className="text-red-400 font-semibold text-sm">⚠ Your fortress has fallen</p>
             <p className="text-gray-400 text-xs mt-1">Sync your data to rebuild defenses and restore city HP for next week's battle.</p>
           </div>
         )}
 
-        {/* Setup banner */}
-        {needsSetup && (
+        {/* No-data empty state */}
+        {transactions.length === 0 && !goal && (
           <div className="bg-amber-950/50 border border-amber-600 rounded-lg p-5">
             <h2 className="text-amber-400 font-bold text-lg mb-1">Welcome to FortifyFi!</h2>
             <p className="text-gray-300 text-sm mb-4">
-              Set up your account to generate spending data and unlock the game.
+              Upload your bank statement to generate a spending goal and unlock the game.
             </p>
             <button
-              onClick={handleSetup}
-              disabled={syncing}
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-semibold rounded-lg transition-colors"
+              onClick={() => setShowUpload(true)}
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg transition-colors"
             >
-              {syncing ? syncMsg : 'Set Up Account'}
+              Upload Statement
             </button>
           </div>
         )}
 
         {/* Sync status */}
-        {syncMsg && !needsSetup && (
+        {syncMsg && (
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-300">
             {syncMsg}
           </div>
@@ -290,7 +259,7 @@ export default function DashboardPage() {
         </div>
 
         {/* NPC Advisors */}
-        {!needsSetup && (
+        {transactions.length > 0 && (
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => setActiveNPC('warden')}
@@ -432,8 +401,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Dismiss */}
-            {goal.goal_category && (
+            {/* Dismiss — one skip per week */}
+            {!skipUsed && goal.goal_category && (
               <div className="pt-1 border-t border-gray-800 flex items-center justify-between">
                 <p className="text-gray-500 text-xs">This spend is intentional?</p>
                 <button
@@ -482,7 +451,7 @@ export default function DashboardPage() {
         <div className="flex gap-4">
           <button
             onClick={() => router.push('/game')}
-            disabled={needsSetup}
+            disabled={transactions.length === 0}
             className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-bold rounded-lg transition-colors text-lg"
           >
             Play This Week
@@ -495,7 +464,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={handleSync}
-            disabled={syncing || needsSetup}
+            disabled={syncing || transactions.length === 0}
             className="px-5 py-3 border border-gray-700 hover:border-gray-500 disabled:opacity-40 text-gray-300 rounded-lg transition-colors text-sm"
           >
             {syncing ? 'Syncing...' : 'Sync Data'}
