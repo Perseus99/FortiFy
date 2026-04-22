@@ -67,7 +67,11 @@ export async function POST(req: NextRequest) {
 
     // Insert transactions with dates assigned to current week
     const dated = assignDates(transactions, period, currentMonday)
-    await db.from('transactions').insert(dated.map(t => ({ user_id: userId, ...t })))
+    await db.from('transactions').insert(dated.map(t => ({
+      user_id: userId,
+      ...t,
+      category: (t.category ?? 'other').toLowerCase(),
+    })))
 
     // Run analyst on the newly inserted transactions
     const financialProfile = await runAnalystAgent(userId, 3000, token)

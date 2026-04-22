@@ -22,8 +22,6 @@ export default function DashboardPage() {
   const [syncMsg, setSyncMsg]       = useState('')
   const [needsSetup, setNeedsSetup] = useState(false)
   const [dismissing, setDismissing] = useState(false)
-  const [allWeeks, setAllWeeks]     = useState<WeeklyGoal[]>([])
-  const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
   const [showUpload, setShowUpload]   = useState(false)
 
@@ -34,34 +32,22 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: gs }, { data: wg }, { data: txns }, { data: weeks }] = await Promise.all([
+      const [{ data: gs }, { data: wg }, { data: txns }] = await Promise.all([
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
         supabase.from('transactions').select('*').eq('user_id', user.id)
           .order('transaction_date', { ascending: false }).limit(100),
-        supabase.from('weekly_goals').select('*').eq('user_id', user.id)
-          .order('week_start_date', { ascending: false }).limit(4),
       ])
 
       if (!txns || txns.length === 0) setNeedsSetup(true)
-      if (gs) { setGameState(gs); setSelectedWeek(gs.week_number) }
+      if (gs) setGameState(gs)
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
-      if (weeks) setAllWeeks(weeks)
       setLoading(false)
     }
     load()
   }, [])
-
-  async function handleSelectWeek(weekNum: number, weekGoal: WeeklyGoal) {
-    if (!userId) return
-    // Update game_state.week_number so the game loads that week's wave_config
-    await supabase.from('game_state').update({ week_number: weekNum }).eq('user_id', userId)
-    setSelectedWeek(weekNum)
-    setGoal(weekGoal)
-    if (gameState) setGameState({ ...gameState, week_number: weekNum })
-  }
 
   async function getToken(): Promise<string | null> {
     const { data: { session } } = await supabase.auth.getSession()
@@ -158,27 +144,14 @@ export default function DashboardPage() {
     </div>
   )
 
-  // Per-week filter: each pill shows only transactions within that week's date range
-  const weeksOldestFirst = [...allWeeks].reverse()
-  const filteredTransactions = (selectedWeek && weeksOldestFirst.length > 0)
-    ? transactions.filter(t => {
-        if (!t.transaction_date) return true
-        const weekEntry    = weeksOldestFirst[selectedWeek - 1]  // selected week's start (1-indexed)
-        const nextWeekEntry = weeksOldestFirst[selectedWeek]      // next week's start (upper bound)
-        if (!weekEntry) return true
-        return t.transaction_date >= weekEntry.week_start_date &&
-               (!nextWeekEntry || t.transaction_date < nextWeekEntry.week_start_date)
-      })
-    : transactions
-
   // For targeted goals, track spend in the specific category; fallback to total
-  const categorySpend = (goal?.goal_category && filteredTransactions.length > 0)
-    ? filteredTransactions.filter(t => t.category === goal.goal_category).reduce((s, t) => s + Number(t.amount), 0)
+  const categorySpend = (goal?.goal_category && transactions.length > 0)
+    ? transactions.filter(t => t.category === goal.goal_category).reduce((s, t) => s + Number(t.amount), 0)
     : goal?.actual_spent ?? 0
   const spentPct   = goal ? Math.min(100, (categorySpend / goal.goal_amount) * 100) : 0
   const overBudget = goal ? categorySpend > goal.goal_amount : false
-  const hasSubscriptions = filteredTransactions.some(t => t.category === 'subscriptions')
-  const hasFlagged     = filteredTransactions.some(t => t.flagged)
+  const hasSubscriptions = transactions.some(t => t.category === 'subscriptions')
+  const hasFlagged     = transactions.some(t => t.flagged)
 
   // Midweek projection
   const weekStart    = goal?.week_start_date ? new Date(goal.week_start_date) : null
@@ -219,12 +192,6 @@ export default function DashboardPage() {
       <nav className="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-amber-400">FortifyFi</h1>
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-700 hover:border-amber-600 hover:text-amber-400 text-gray-400 rounded-lg text-sm transition-colors"
-          >
-            <span>📄</span> Upload Statement
-          </button>
           <span className="text-gray-400 text-sm">{email}</span>
           <button onClick={handleLogout} className="text-sm text-gray-400 hover:text-white transition-colors">
             Logout
@@ -263,35 +230,6 @@ export default function DashboardPage() {
         {syncMsg && !needsSetup && (
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 text-sm text-gray-300">
             {syncMsg}
-          </div>
-        )}
-
-        {/* Week selector */}
-        {allWeeks.length > 1 && (
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <p className="text-gray-400 text-xs uppercase tracking-wide mb-3">Week History</p>
-            <div className="flex gap-2 flex-wrap">
-              {[...allWeeks].reverse().map((w, i) => {
-                const weekNum = i + 1
-                const isSelected = selectedWeek === weekNum
-                return (
-                  <button
-                    key={w.id}
-                    onClick={() => handleSelectWeek(weekNum, w)}
-                    className={`px-4 py-2 rounded-lg border text-xs font-semibold transition-all ${
-                      isSelected
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                        : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'
-                    }`}
-                  >
-                    Week {weekNum}
-                  </button>
-                )
-              })}
-            </div>
-            {selectedWeek && selectedWeek !== gameState?.week_number && (
-              <p className="text-amber-400 text-xs mt-2">⚠ Viewing Week {selectedWeek} — Play This Week will use this wave</p>
-            )}
           </div>
         )}
 
@@ -499,9 +437,9 @@ export default function DashboardPage() {
         )}
 
         {/* Spending category breakdown */}
-        {filteredTransactions.length > 0 && (() => {
+        {transactions.length > 0 && (() => {
           const cats: Record<string, number> = {}
-          filteredTransactions.forEach(t => { if (t.category && t.category !== 'income') cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
+          transactions.forEach(t => { if (t.category && t.category !== 'income') cats[t.category] = (cats[t.category] ?? 0) + Number(t.amount) })
           const sorted = Object.entries(cats).sort(([,a],[,b]) => b - a).slice(0, 5)
           const max = sorted[0]?.[1] ?? 1
           return (
@@ -523,7 +461,7 @@ export default function DashboardPage() {
           )
         })()}
 
-        {/* Play + Sync buttons */}
+        {/* Play + Upload + Sync buttons */}
         <div className="flex gap-4">
           <button
             onClick={() => router.push('/game')}
@@ -531,6 +469,12 @@ export default function DashboardPage() {
             className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-bold rounded-lg transition-colors text-lg"
           >
             Play This Week
+          </button>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors text-sm"
+          >
+            📄 Upload Statement
           </button>
           <button
             onClick={handleSync}
@@ -542,14 +486,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Transactions */}
-        {filteredTransactions.length > 0 && (
+        {transactions.length > 0 && (
           <div className="bg-gray-900 rounded-lg border border-gray-800">
             <div className="p-4 border-b border-gray-800 flex justify-between items-center">
               <h2 className="text-white font-semibold">Transactions</h2>
-              <span className="text-gray-500 text-xs">{filteredTransactions.length} shown</span>
+              <span className="text-gray-500 text-xs">{transactions.length} shown</span>
             </div>
             <div className="divide-y divide-gray-800">
-              {filteredTransactions.map(txn => (
+              {transactions.map(txn => (
                 <div key={txn.id} className="px-4 py-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     {txn.flagged && (
