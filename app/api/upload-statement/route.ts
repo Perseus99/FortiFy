@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
       const text = await file.text()
       raw = await chat(
         SYSTEM_PROMPT,
-        `Extract all transactions from this bank statement:\n\n${text}`
+        `Extract all transactions from this bank statement:\n\n${text}`,
+        4096,
       )
     } else {
       const buffer = Buffer.from(await file.arrayBuffer())
@@ -43,7 +44,8 @@ export async function POST(req: NextRequest) {
       raw = await chatWithPDF(
         SYSTEM_PROMPT,
         base64,
-        'Extract all transactions from this bank statement. Return only the JSON array.'
+        'Extract all transactions from this bank statement. Return only the JSON array.',
+        4096,
       )
     }
 
