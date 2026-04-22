@@ -1,7 +1,7 @@
 import { createAuthClient } from '@/lib/supabase'
 import type { WaveConfig } from '@/lib/types'
 
-function scoreToWaveParams(score: number) {
+export function scoreToWaveParams(score: number) {
   if (score >= 80) return { enemy_count: 8,  enemy_speed: 0.8, enemy_hp: 60,  spawn_rate: 2.5, bonus_tower: 'cannon' }
   if (score >= 50) return { enemy_count: 14, enemy_speed: 1.2, enemy_hp: 100, spawn_rate: 1.8, bonus_tower: null }
   return              { enemy_count: 20, enemy_speed: 1.6, enemy_hp: 150, spawn_rate: 1.2, bonus_tower: null }
