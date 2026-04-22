@@ -1,7 +1,6 @@
 FORTIFY BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
 Statement Period: Apr 4 – Apr 10, 2026
-Demo Scenario: Week 1.5 — Mid-week check-in, spend has grown
 
 ================================================================
 TRANSACTIONS
@@ -9,39 +8,32 @@ TRANSACTIONS
 
 Date        Merchant                        Category          Amount
 ------------------------------------------------------------------------
-Apr 4       Direct Deposit — Paycheck       Income            $2,800.00
-Apr 4       Netflix                         Subscriptions       $15.49
-Apr 4       Adobe Creative Cloud            Subscriptions       $54.99
-Apr 4       Starbucks Coffee                Food                 $6.50
-Apr 4       Shell Gas Station               Transport           $45.00
-Apr 5       Local Grill & Bistro            Food                $67.50
-Apr 5       Amazon Marketplace              Shopping            $78.99
-Apr 5       Chipotle Restaurant             Food                $38.50
-Apr 5       Spotify                         Subscriptions        $9.99
-Apr 5       Uber Eats                       Food                $34.99
-Apr 6       Target Store                    Shopping            $67.00
-Apr 6       Cinema Tickets                  Entertainment       $18.00
-Apr 6       Starbucks Coffee                Food                 $6.50
-Apr 7       Whole Foods Market              Food               $112.00
-Apr 7       DoorDash                        Food                $22.50
-Apr 7       Starbucks Coffee                Food                 $7.25
-Apr 8       CVS Pharmacy                    Shopping            $23.50
-Apr 9       Lyft                            Transport           $12.50
-Apr 9       Starbucks Coffee                Food                 $8.75
-Apr 10      Amazon Marketplace              Shopping            $45.00
+2026-04-04  Uber Eats                       Food                $34.99
+2026-04-04  Starbucks Coffee                Food                 $6.50
+2026-04-05  Target Store                    Shopping            $67.00
+2026-04-05  Chipotle Restaurant             Food                $38.50
+2026-04-06  Cinema Tickets                  Entertainment       $18.00
+2026-04-07  Starbucks Coffee                Food                 $6.50
+2026-04-08  Corner Café                     Food                 $4.50
+2026-04-08  Trader Joe's                    Food                $42.00
+2026-04-09  Corner Café                     Food                 $4.50
+2026-04-09  Lyft                            Transport           $11.00
+2026-04-10  Corner Café                     Food                 $4.50
+2026-04-10  CVS Pharmacy                    Shopping            $18.00
 
 ================================================================
 SUMMARY
 ================================================================
-Total Income:       $2,800.00
-Total Spend:          $678.95
-Net:               +$2,121.05
+Total Income:       $0.00
+Total Spend:          $256.49
 
 ================================================================
 NOTES FOR DEMO
 ================================================================
-- Overlaps with Week 1 (Apr 4-7 overlap) — date-range merge keeps both
-- Food goal progress bar should show heavy overspend with days remaining
-- Starbucks appears 4 times — Scout flags the pattern
 - Upload using the "Mid-Week" period option
+- Apr 4–7: SAME transactions as Week 1 for those dates (overlap)
+  → these will show as "already on record" in the merge stats
+- Apr 8–10: NEW transactions — spending habits improving
+  (Corner Café instead of Starbucks, groceries instead of delivery)
+- Goal progress bar updates to show Apr 8–10 food spend only
 ================================================================

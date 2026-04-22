@@ -78,6 +78,7 @@ export interface ParsedTxn {
   category: string
   flagged: boolean
   flag_reason: string | null
+  transaction_date: string | null
 }
 
 export type FinancialProfile = {

@@ -1,7 +1,6 @@
 FORTIFY BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
 Statement Period: Apr 8 – Apr 14, 2026
-Demo Scenario: Week 2 — Improved behaviour; NPCs reference Week 1 history
 
 ================================================================
 TRANSACTIONS
@@ -9,36 +8,36 @@ TRANSACTIONS
 
 Date        Merchant                        Category          Amount
 ------------------------------------------------------------------------
-Apr 8       Direct Deposit — Paycheck       Income            $2,800.00
-Apr 8       Corner Café                     Food                 $4.50
-Apr 8       Shell Gas Station               Transport           $40.00
-Apr 8       Trader Joe's                    Food                $87.00
-Apr 9       Corner Café                     Food                 $4.50
-Apr 9       Lyft                            Transport           $11.00
-Apr 9       Chipotle Restaurant             Food                $22.00
-Apr 9       Target Store                    Shopping            $45.00
-Apr 10      Corner Café                     Food                 $4.50
-Apr 10      Cinema Tickets                  Entertainment       $16.00
-Apr 10      CVS Pharmacy                    Shopping            $18.00
-Apr 10      Verizon Phone Bill              Utilities           $85.00
-Apr 11      Trader Joe's                    Food                $68.00
-Apr 11      Corner Café                     Food                 $4.50
+2026-04-08  Corner Café                     Food                 $4.50
+2026-04-08  Trader Joe's                    Food                $42.00
+2026-04-09  Corner Café                     Food                 $4.50
+2026-04-09  Lyft                            Transport           $11.00
+2026-04-10  Corner Café                     Food                 $4.50
+2026-04-10  CVS Pharmacy                    Shopping            $18.00
+2026-04-11  Direct Deposit — Paycheck       Income            $2,800.00
+2026-04-11  Trader Joe's                    Food                $38.00
+2026-04-12  Corner Café                     Food                 $4.50
+2026-04-12  Verizon Phone Bill              Utilities           $85.00
+2026-04-13  Corner Café                     Food                 $4.50
+2026-04-13  Cinema Tickets                  Entertainment       $16.00
+2026-04-14  Corner Café                     Food                 $4.50
+2026-04-14  Target Store                    Shopping            $45.00
 
 ================================================================
 SUMMARY
 ================================================================
 Total Income:       $2,800.00
-Total Spend:          $409.00
-Net:               +$2,391.00
+Total Spend:          $282.50
+Net:               +$2,517.50
 
 ================================================================
 NOTES FOR DEMO
 ================================================================
-- No Uber Eats / DoorDash — switched to groceries
-- Starbucks ($6.50) replaced with Corner Café ($4.50)
-- No subscription stack this week
-- NPCs will reference the real Week 1 goal result (not a fake seed)
-  if Week 1 was uploaded first
-- Warden/Scout acknowledge improvement; Architect gives a positive assessment
 - Upload using the "Week 2" period option
+- Apr 8–10: SAME as Week 1.5 (overlap — will show "already on record")
+- Apr 11–14: NEW — continued improvement pattern
+- Week 1 goal is CLOSED with final Apr 8–14 result (pass or fail)
+- New Week 2 goal is set; progress bar resets to 0%
+- Game carries over Week 1 best points/HP as starting values
+- No Starbucks, no Uber Eats, no subscription stack
 ================================================================

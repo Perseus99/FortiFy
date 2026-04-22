@@ -4,8 +4,9 @@ import { VALID_PERIODS } from '@/lib/types'
 
 export const maxDuration = 120
 
-const SYSTEM_PROMPT = `You are a bank statement parser. Extract all transactions from the provided bank statement PDF.
+const SYSTEM_PROMPT = `You are a bank statement parser. Extract all transactions from the provided bank statement.
 Return ONLY a valid JSON array with no markdown, no explanation, no code blocks. Each transaction object must have:
+- transaction_date: string in YYYY-MM-DD format (parse from the Date column; infer year from the statement period header if not shown explicitly)
 - merchant: string
 - amount: number (always positive)
 - category: exactly one of "food" | "subscriptions" | "shopping" | "transport" | "entertainment" | "utilities" | "income" | "other"

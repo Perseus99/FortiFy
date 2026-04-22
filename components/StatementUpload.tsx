@@ -28,6 +28,7 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
   const [totalIncome, setTotalIncome] = useState(0)
   const [error, setError]             = useState<string | null>(null)
   const [fileName, setFileName]       = useState<string | null>(null)
+  const [mergeStats, setMergeStats]   = useState<{ preExisting: number; inserted: number } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function getToken() {
@@ -82,8 +83,9 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Failed to apply statement'); setStep('preview'); return }
 
+      setMergeStats({ preExisting: data.preExisting ?? 0, inserted: data.inserted ?? 0 })
       setStep('done')
-      setTimeout(onComplete, 1200)
+      setTimeout(onComplete, 2500)
     } catch (e: any) {
       setError(e.message)
       setStep('preview')
@@ -255,7 +257,21 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
             <div className="text-center py-8">
               <p className="text-2xl mb-3">✓</p>
               <p className="text-gray-300 text-sm font-medium">Statement applied!</p>
-              <p className="text-gray-600 text-xs mt-1">Reloading dashboard...</p>
+              {mergeStats && (
+                <div className="mt-3 text-xs space-y-1">
+                  {mergeStats.preExisting > 0 && (
+                    <p className="text-amber-500">
+                      {mergeStats.preExisting} transaction{mergeStats.preExisting !== 1 ? 's' : ''} already on record — refreshed
+                    </p>
+                  )}
+                  <p className="text-green-400">
+                    {mergeStats.inserted - mergeStats.preExisting > 0
+                      ? `${mergeStats.inserted - mergeStats.preExisting} new transaction${mergeStats.inserted - mergeStats.preExisting !== 1 ? 's' : ''} added`
+                      : `${mergeStats.inserted} transaction${mergeStats.inserted !== 1 ? 's' : ''} refreshed`}
+                  </p>
+                </div>
+              )}
+              <p className="text-gray-600 text-xs mt-3">Reloading dashboard...</p>
             </div>
           )}
         </div>

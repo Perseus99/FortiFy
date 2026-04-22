@@ -157,10 +157,8 @@ export default function DashboardPage() {
     </div>
   )
 
-  // For targeted goals, track spend in the specific category; fallback to total
-  const categorySpend = (goal?.goal_category && transactions.length > 0)
-    ? transactions.filter(t => t.category === goal.goal_category).reduce((s, t) => s + Number(t.amount), 0)
-    : goal?.actual_spent ?? 0
+  // actual_spent is kept accurate by confirm-statement (tracks only the goal period)
+  const categorySpend = goal?.actual_spent ?? 0
   const spentPct   = goal ? Math.min(100, (categorySpend / goal.goal_amount) * 100) : 0
   const overBudget = goal ? categorySpend > goal.goal_amount : false
   const hasSubscriptions = transactions.some(t => t.category === 'subscriptions')
