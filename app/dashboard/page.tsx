@@ -133,6 +133,19 @@ export default function DashboardPage() {
     setDismissing(false)
   }
 
+  async function handleReset() {
+    if (!userId) return
+    if (!window.confirm('Reset all data? This clears transactions, goals, game state, and NPC history.')) return
+    const token = await getToken()
+    if (!token) return
+    await fetch('/api/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId }),
+    })
+    window.location.reload()
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/')
@@ -193,6 +206,9 @@ export default function DashboardPage() {
         <h1 className="text-xl font-bold text-amber-400">FortifyFi</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-400 text-sm">{email}</span>
+          <button onClick={handleReset} className="text-sm text-gray-600 hover:text-red-400 transition-colors">
+            Reset
+          </button>
           <button onClick={handleLogout} className="text-sm text-gray-400 hover:text-white transition-colors">
             Logout
           </button>
