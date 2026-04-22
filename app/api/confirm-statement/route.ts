@@ -56,11 +56,45 @@ export async function POST(req: NextRequest) {
       const carryPoints = prevGs?.best_points_week ?? 0
       const carryHealth = Math.max(prevGs?.best_health_week ?? 100, 50)
 
+      // Close out the real active goal from last week before wiping it
+      const { data: activeGoal } = await db.from('weekly_goals')
+        .select('id, goal_category, goal_amount, actual_spent, score')
+        .eq('user_id', userId)
+        .eq('completed', false)
+        .maybeSingle()
+
+      if (activeGoal) {
+        await db.from('weekly_goals')
+          .update({ completed: true })
+          .eq('id', activeGoal.id)
+      }
+
       await Promise.all([
+        // Only wipe transactions in the incoming W2 date range
         db.from('transactions').delete().eq('user_id', userId)
           .gte('transaction_date', rangeStart).lte('transaction_date', rangeEnd),
-        db.from('weekly_goals').delete().eq('user_id', userId),
+        // Only wipe any remaining incomplete goals — keep completed history
+        db.from('weekly_goals').delete().eq('user_id', userId).eq('completed', false),
       ])
+
+      // If no real completed history exists (e.g. fresh demo), seed a placeholder
+      const { count: histCount } = await db.from('weekly_goals')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('completed', true)
+
+      if (!histCount || histCount === 0) {
+        await db.from('weekly_goals').insert({
+          user_id: userId,
+          week_start_date: lastMonday,
+          goal_amount: 350,
+          goal_category: 'food',
+          goal_label: 'Keep food spend under $350 — Week 1 target',
+          actual_spent: 287,
+          score: 72,
+          completed: true,
+        })
+      }
 
       // Reset game state, carrying forward last week's best result as the new baseline
       await db.from('game_state').upsert({
@@ -77,18 +111,6 @@ export async function POST(req: NextRequest) {
         plays_this_week: 0,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
-
-      // Seed a completed Week 1 goal so NPCs have playerHistory to reference
-      await db.from('weekly_goals').insert({
-        user_id: userId,
-        week_start_date: lastMonday,
-        goal_amount: 350,
-        goal_category: 'food',
-        goal_label: 'Keep food spend under $350 — Week 1 target',
-        actual_spent: 287,
-        score: 72,
-        completed: true,
-      })
     } else {
       // Same week: date-range merge — only replace transactions that overlap
       await db.from('transactions').delete().eq('user_id', userId)
