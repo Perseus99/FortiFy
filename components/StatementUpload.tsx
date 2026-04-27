@@ -4,16 +4,14 @@ import { useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ParsedTxn, Period } from '@/lib/types'
 import { CAT_ICONS } from '@/lib/constants'
-import GoalPicker from './GoalPicker'
 
-type Step = 'picker' | 'parsing' | 'preview' | 'confirming' | 'done' | 'goal-picker'
+type Step = 'picker' | 'parsing' | 'preview' | 'confirming' | 'done'
 
 const PERIOD_CONFIG: Record<Period, { label: string; badge: string; desc: string; color: string }> = {
-  week1:     { label: 'Week 1',       badge: 'W1',  desc: 'Full feature demo — goals, NPCs, game', color: 'border-amber-600 bg-amber-500/10 text-amber-400' },
-  week1half: { label: 'Mid-Week',     badge: 'W1½', desc: 'Day 3–4 check-in — goal progress bar',  color: 'border-blue-600 bg-blue-500/10 text-blue-400' },
-  week2:     { label: 'Week 2',       badge: 'W2',  desc: 'New week — NPC memory of Week 1',       color: 'border-green-600 bg-green-500/10 text-green-400' },
+  week1:     { label: 'Week 1',   badge: 'W1',  desc: 'Full feature demo — goals, NPCs, game', color: 'border-amber-600 bg-amber-500/10 text-amber-400' },
+  week1half: { label: 'Mid-Week', badge: 'W1½', desc: 'Day 3–4 check-in — goal progress bar',  color: 'border-blue-600 bg-blue-500/10 text-blue-400' },
+  week2:     { label: 'Week 2',   badge: 'W2',  desc: 'New week — NPC memory of Week 1',       color: 'border-green-600 bg-green-500/10 text-green-400' },
 }
-
 
 interface Props {
   userId: string
@@ -22,16 +20,14 @@ interface Props {
 }
 
 export default function StatementUpload({ userId, onClose, onComplete }: Props) {
-  const [step, setStep]               = useState<Step>('picker')
-  const [period, setPeriod]           = useState<Period>('week1')
-  const [transactions, setTxns]       = useState<ParsedTxn[]>([])
-  const [totalSpend, setTotalSpend]   = useState(0)
+  const [step, setStep]             = useState<Step>('picker')
+  const [period, setPeriod]         = useState<Period>('week1')
+  const [transactions, setTxns]     = useState<ParsedTxn[]>([])
+  const [totalSpend, setTotalSpend] = useState(0)
   const [totalIncome, setTotalIncome] = useState(0)
-  const [error, setError]             = useState<string | null>(null)
-  const [fileName, setFileName]       = useState<string | null>(null)
-  const [mergeStats, setMergeStats]         = useState<{ preExisting: number; inserted: number } | null>(null)
-  const [goalWeekStartDate, setGoalWeekStartDate] = useState<string>('')
-  const [goalWeekNumber, setGoalWeekNumber]       = useState<number>(1)
+  const [error, setError]           = useState<string | null>(null)
+  const [fileName, setFileName]     = useState<string | null>(null)
+  const [mergeStats, setMergeStats] = useState<{ preExisting: number; inserted: number } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function getToken() {
@@ -87,14 +83,8 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
       if (!res.ok) { setError(data.error ?? 'Failed to apply statement'); setStep('preview'); return }
 
       setMergeStats({ preExisting: data.preExisting ?? 0, inserted: data.inserted ?? 0 })
-      if (data.needsGoalSelection) {
-        setGoalWeekStartDate(data.trackingStart ?? '')
-        setGoalWeekNumber(data.weekNumber ?? 1)
-        setStep('goal-picker')
-      } else {
-        setStep('done')
-        setTimeout(onComplete, 2500)
-      }
+      setStep('done')
+      setTimeout(onComplete, 2500)
     } catch (e: any) {
       setError(e.message)
       setStep('preview')
@@ -110,12 +100,8 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-800 flex justify-between items-center">
           <div>
-            <p className="text-white font-bold">
-              {step === 'goal-picker' ? 'Choose Your Goal' : 'Upload Bank Statement'}
-            </p>
-            <p className="text-gray-500 text-xs mt-0.5">
-              {step === 'goal-picker' ? 'Set your weekly spending target' : 'PDF → parse → apply to dashboard'}
-            </p>
+            <p className="text-white font-bold">Upload Bank Statement</p>
+            <p className="text-gray-500 text-xs mt-0.5">PDF → parse → apply to dashboard</p>
           </div>
           {step !== 'confirming' && step !== 'done' && (
             <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">×</button>
@@ -124,7 +110,7 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
-          {/* Period selector — always visible in picker step */}
+          {/* Period selector */}
           {(step === 'picker' || step === 'parsing') && (
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">Demo Period</p>
@@ -204,7 +190,6 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
           {/* Preview */}
           {step === 'preview' && (
             <>
-              {/* Summary bar */}
               <div className={`rounded-lg border p-4 ${cfg.color}`}>
                 <div className="flex justify-between items-start">
                   <div>
@@ -221,7 +206,6 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
 
               {error && <p className="text-red-400 text-xs">{error}</p>}
 
-              {/* Transaction list */}
               <div>
                 <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">Parsed Transactions</p>
                 <div className="bg-gray-800 rounded-lg divide-y divide-gray-700 max-h-60 overflow-y-auto">
@@ -263,26 +247,6 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
               <p className="text-gray-300 text-sm font-medium animate-pulse">Applying statement...</p>
               <p className="text-gray-600 text-xs mt-1">Running financial analysis</p>
             </div>
-          )}
-
-          {/* Goal picker */}
-          {step === 'goal-picker' && (
-            <>
-              {mergeStats && (
-                <div className="bg-gray-800/60 rounded-lg px-3 py-2 border border-gray-700/50 text-xs text-gray-400">
-                  {mergeStats.inserted - mergeStats.preExisting > 0
-                    ? `${mergeStats.inserted - mergeStats.preExisting} new transactions imported`
-                    : `${mergeStats.inserted} transactions refreshed`}
-                  {mergeStats.preExisting > 0 && ` · ${mergeStats.preExisting} already on record`}
-                </div>
-              )}
-              <GoalPicker
-                userId={userId}
-                weekStartDate={goalWeekStartDate}
-                weekNumber={goalWeekNumber}
-                onGoalSet={() => { setStep('done'); setTimeout(onComplete, 2500) }}
-              />
-            </>
           )}
 
           {/* Done */}
