@@ -1,59 +1,84 @@
-O'GIRL BANK — ACCOUNT STATEMENT
-Account: Checking ••••4821
-Statement Period: Apr 1 – Apr 7, 2026
-Account Holder: Demo User
+O'GIRL BANK, N.A.
+Member FDIC | Equal Housing Lender
+P.O. Box 182387, Austin, TX 78718
+Customer Service: 1-800-645-5273 | ogirlbank.com
 
-================================================================
-TRANSACTIONS
-================================================================
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ACCOUNT STATEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Account Holder:   Demo User
+Account Number:   ••••••••4821
+Account Type:     Premier Checking
+Statement Period: April 1, 2026 – April 7, 2026
 
-Date        Merchant                              Amount
-------------------------------------------------------------------------
-2026-04-01  Direct Deposit — Payroll              $2,800.00
-2026-04-01  Netflix                                  $15.49
-2026-04-01  Adobe Creative Cloud                     $54.99
-2026-04-01  Starbucks #3847                           $6.50
-2026-04-01  Starbucks #3847                           $6.50
-2026-04-02  Shell Gas Station                        $52.00
-2026-04-02  The Local Grille                         $82.50
-2026-04-02  Target Store #0482                       $67.80
-2026-04-03  Spotify Premium                           $9.99
-2026-04-03  Planet Fitness                           $24.99
-2026-04-03  Uber Eats — McDonald's                   $18.99
-2026-04-03  Starbucks #3847                           $6.50
-2026-04-03  Verizon Wireless                         $85.00
-2026-04-04  Chipotle Mexican Grill                   $38.50
-2026-04-04  Starbucks #3847                           $6.50
-2026-04-04  CVS Pharmacy                             $28.50
-2026-04-04  Planet Fitness                           $24.99
-2026-04-05  DoorDash — Panda Express                 $24.50
-2026-04-05  Amazon.com — Bluetooth Speaker           $89.99
-2026-04-05  AMC Theaters                             $22.00
-2026-04-05  Starbucks #3847                           $6.50
-2026-04-06  Shell Gas Station                        $44.50
-2026-04-06  AMZN*4X2K9LM1                            $23.99
-2026-04-06  Sidebar Lounge & Bar                     $48.00
-2026-04-06  Postmates — Late Night Tacos             $31.99
-2026-04-07  Hulu                                     $17.99
-2026-04-07  Starbucks #3847                           $6.50
-2026-04-07  Walgreens                                $18.40
-2026-04-07  Lyft                                     $14.50
+ACCOUNT SUMMARY
+───────────────────────────────────────────
+Opening Balance (Apr 01):       $3,247.83
+  Total Credits:                $2,800.00
+  Total Debits:                   $946.01
+Closing Balance (Apr 07):       $5,101.82
+───────────────────────────────────────────
 
-================================================================
-SUMMARY
-================================================================
-Total Income:        $2,800.00
-Total Spend:           $893.59
-Net:                +$1,906.41
 
-================================================================
-NOTES FOR DEMO
-================================================================
-- Upload using the "Week 1" period option
-- Starbucks appears TWICE on Apr 1 (potential duplicate charge)
-- Planet Fitness appears TWICE (Apr 3 + Apr 4) — likely an error
-- AMZN*4X2K9LM1 is an unrecognized Amazon charge
-- Heavy delivery spend: Uber Eats + DoorDash + Postmates across 3 days
-- Sidebar Lounge $48 bar tab on a weeknight
-- Goal will be FORWARD-LOOKING from Apr 8 — progress bar starts at 0%
-================================================================
+TRANSACTION DETAIL
+──────────────────────────────────────────────────────────────────────────────────────
+Date    Description                                     Debits     Credits    Balance
+──────────────────────────────────────────────────────────────────────────────────────
+Apr 01  PAYROLL DIR DEP  ACME CORP  PPD                            2,800.00   6,047.83
+Apr 01  NETFLIX.COM  408-540-3700  CA                    15.49                6,032.34
+Apr 01  ADOBE *CREATIVE CLOUD  408-536-6000  CA          54.99                5,977.35
+Apr 01  STARBUCKS #03847  AUSTIN TX                       6.47                5,970.88
+Apr 01  STARBUCKS #03847  AUSTIN TX                       6.47                5,964.41
+Apr 02  SHELL OIL 57492280304  AUSTIN TX                 52.18                5,912.23
+Apr 02  TST* THE LOCAL GRILLE  AUSTIN TX                 82.43                5,829.80
+Apr 02  TARGET 00482  AUSTIN TX                          67.83                5,761.97
+Apr 03  SPOTIFY USA  877-712-2770  NY                     9.99                5,751.98
+Apr 03  PLANET FITNESS #0841  AUSTIN TX                  24.99                5,726.99
+Apr 03  UBER EATS  866-576-1039  CA                      19.37                5,707.62
+Apr 03  STARBUCKS #03847  AUSTIN TX                       6.47                5,701.15
+Apr 03  VZWRLSS*PREPAID  VERIZON  NJ                     85.00                5,616.15
+Apr 04  CHIPOTLE 2847  AUSTIN TX                         38.63                5,577.52
+Apr 04  STARBUCKS #03847  AUSTIN TX                       6.47                5,571.05
+Apr 04  CVS PHARMACY #4821  AUSTIN TX                    28.47                5,542.58
+Apr 04  PLANET FITNESS #0841  AUSTIN TX                  24.99                5,517.59
+Apr 05  DOORDASH*PANDAEXPRESS  855-973-1040  CA          24.83                5,492.76
+Apr 05  AMZN MKTP US*2A4B9CD3  AMZN.COM/BILL WA         89.99                5,402.77
+Apr 05  AMC THEATERS #842  AUSTIN TX                     22.00                5,380.77
+Apr 05  STARBUCKS #03847  AUSTIN TX                       6.47                5,374.30
+Apr 05  ATM WITHDRAWAL  6TH ST  AUSTIN TX                60.00                5,314.30
+Apr 05  ATM TRANSACTION FEE                               3.00                5,311.30
+Apr 06  SHELL OIL 57492280304  AUSTIN TX                 44.73                5,266.57
+Apr 06  AMZN*4X2K9LM1  AMZN.COM/BILL  WA                23.99                5,242.58
+Apr 06  SIDEBAR LOUNGE  AUSTIN TX                        51.00                5,191.58
+Apr 06  POSTMATES*TACOSBEND  800-419-2777  CA            32.14                5,159.44
+Apr 07  HULU  866-571-2789  CA                           17.99                5,141.45
+Apr 07  STARBUCKS #03847  AUSTIN TX                       6.47                5,134.98
+Apr 07  WALGREENS #4291  AUSTIN TX                       18.43                5,116.55
+Apr 07  LYFT *RIDE  855-865-9553  CA                     14.73                5,101.82
+──────────────────────────────────────────────────────────────────────────────────────
+
+
+— END OF STATEMENT —
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEMO NOTES (not part of statement)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Upload period: Week 1
+
+What Claude should flag:
+  · STARBUCKS #03847 appears twice on Apr 01 — likely duplicate charge
+  · PLANET FITNESS #0841 billed twice (Apr 03 + Apr 04) — billing error
+  · AMZN*4X2K9LM1 — unrecognized Amazon charge, no product description
+  · DOORDASH + UBER EATS + POSTMATES all in one week — delivery markup pattern
+  · SIDEBAR LOUNGE $51.00 on a Wednesday night
+
+Spending overview:
+  Food (restaurants + delivery + coffee): ~$238
+  Subscriptions (Netflix, Adobe, Spotify, Planet Fitness x2, Hulu): ~$138
+  Shopping (Amazon x2): ~$114
+  Transport (Shell x2, Lyft, ATM cash): ~$134
+  Entertainment (AMC, bar): ~$73
+  Utilities (Verizon): $85
+
+Goal is set FORWARD-LOOKING from Apr 8 — progress bar starts at $0.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

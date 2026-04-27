@@ -1,58 +1,70 @@
-O'GIRL BANK — ACCOUNT STATEMENT
-Account: Checking ••••4821
-Statement Period: Apr 8 – Apr 14, 2026
-Account Holder: Demo User
+O'GIRL BANK, N.A.
+Member FDIC | Equal Housing Lender
+P.O. Box 182387, Austin, TX 78718
+Customer Service: 1-800-645-5273 | ogirlbank.com
 
-================================================================
-TRANSACTIONS
-================================================================
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ACCOUNT STATEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Account Holder:   Demo User
+Account Number:   ••••••••4821
+Account Type:     Premier Checking
+Statement Period: April 8, 2026 – April 14, 2026
 
-Date        Merchant                              Amount
-------------------------------------------------------------------------
-2026-04-08  Corner Café                               $4.50
-2026-04-08  Trader Joe's                             $63.50
-2026-04-09  Corner Café                               $4.50
-2026-04-09  Lyft                                     $11.00
-2026-04-10  Corner Café                               $4.50
-2026-04-10  Chipotle Mexican Grill                   $21.50
-2026-04-10  Amazon.com — USB-C Charger               $12.99
-2026-04-11  Direct Deposit — Payroll              $2,800.00
-2026-04-11  Trader Joe's                             $71.00
-2026-04-11  GOOGLE*SVCS 650-253-0000                 $19.99
-2026-04-12  Corner Café                               $4.50
-2026-04-12  Verizon Wireless                         $85.00
-2026-04-12  Xfinity Internet                         $79.99
-2026-04-13  Corner Café                               $4.50
-2026-04-13  Nike.com                                $137.50
-2026-04-13  H&M Online Store                         $89.99
-2026-04-13  Lyft                                     $18.50
-2026-04-14  Corner Café                               $4.50
-2026-04-14  ZARA.com                                 $74.99
-2026-04-14  Whole Foods Market                       $52.00
-2026-04-14  Regal Cinemas                            $19.00
+ACCOUNT SUMMARY
+───────────────────────────────────────────
+Opening Balance (Apr 08):       $5,101.82
+  Total Credits:                $2,800.00
+  Total Debits:                   $785.74
+Closing Balance (Apr 14):       $7,116.08
+───────────────────────────────────────────
 
-================================================================
-SUMMARY
-================================================================
-Total Income:        $2,800.00
-Total Spend:           $784.45
-Net:                +$2,015.55
 
-================================================================
-NOTES FOR DEMO
-================================================================
-- Upload using the "Week 2" period option
-- Apr 8–10: same as Mid-Week upload (overlap — shows "already on record")
-- Apr 11–14: NEW data
-- Week 1 food goal is CLOSED with final Apr 8–14 result
-- New Week 2 goal is set for the next period (tracking starts Apr 15)
-- Game carries over Week 1 best points/HP as starting values
+TRANSACTION DETAIL
+──────────────────────────────────────────────────────────────────────────────────────
+Date    Description                                     Debits     Credits    Balance
+──────────────────────────────────────────────────────────────────────────────────────
+Apr 08  SQ *CORNER CAFE  AUSTIN TX                        4.73                5,097.09
+Apr 08  TRADER JOE'S #184  AUSTIN TX                     63.47                5,033.62
+Apr 09  SQ *CORNER CAFE  AUSTIN TX                        4.73                5,028.89
+Apr 09  LYFT *RIDE  855-865-9553  CA                     11.28                5,017.61
+Apr 10  SQ *CORNER CAFE  AUSTIN TX                        4.73                5,012.88
+Apr 10  CHIPOTLE 2847  AUSTIN TX                         21.43                4,991.45
+Apr 10  AMZN MKTP US*7C8D9EF1  AMZN.COM/BILL WA         12.99                4,978.46
+Apr 11  PAYROLL DIR DEP  ACME CORP  PPD                            2,800.00   7,778.46
+Apr 11  WHOLEFDS #10248  AUSTIN TX                        71.23               7,707.23
+Apr 11  GOOGLE*SVCS  650-253-0000  CA                     19.99               7,687.24
+Apr 12  SQ *CORNER CAFE  AUSTIN TX                         4.73               7,682.51
+Apr 12  VZWRLSS*PREPAID  VERIZON  NJ                      85.00               7,597.51
+Apr 12  COMCAST XFINITY  800-934-6489  PA                 79.99               7,517.52
+Apr 13  SQ *CORNER CAFE  AUSTIN TX                         4.73               7,512.79
+Apr 13  NIKE.COM  503-671-6453  OR                        137.43               7,375.36
+Apr 13  H&M ONLINE #5821  NEW YORK NY                     89.97               7,285.39
+Apr 13  LYFT *RIDE  855-865-9553  CA                      18.47               7,266.92
+Apr 14  SQ *CORNER CAFE  AUSTIN TX                         4.73               7,262.19
+Apr 14  ZARA USA LLC  212-756-2000  NY                     74.97               7,187.22
+Apr 14  WHOLEFDS #10248  AUSTIN TX                         52.14               7,135.08
+Apr 14  REGAL CINEMAS  844-462-7342  TX                    19.00               7,116.08
+──────────────────────────────────────────────────────────────────────────────────────
+
+
+— END OF STATEMENT —
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEMO NOTES (not part of statement)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Upload period: Week 2
+
+Apr 08–10: same as Mid-Week upload (overlap — "already on record")
+Apr 11–14: NEW data; Week 1 food goal closes with final result
 
 What the NPCs should notice:
-  · Scout: GOOGLE*SVCS is unrecognized — possible hidden subscription
-  · Quartermaster: Shopping total $315 (Nike + H&M + ZARA) in 2 days
-  · Architect: Savings rate improved vs Week 1 ($784 spend vs $893)
-  · Warden: Shopping splurge offsets food improvement
-  · Food improvement: Corner Café daily ($4.50) vs Starbucks ($6.50),
-    groceries vs delivery — food spend down ~40% from Week 1
-================================================================
+  · Scout:        GOOGLE*SVCS $19.99 — unclear Google charge, no product name
+  · Quartermaster: NIKE + H&M + ZARA = $302 shopping burst across 2 days
+  · Architect:    Savings rate up vs Week 1 ($785 spend vs $946)
+  · Warden:       Shopping splurge offsets the food improvement
+  · Food win:     SQ *CORNER CAFE ($4.73/day) vs STARBUCKS ($6.47/day),
+                  WHOLEFDS groceries vs delivery apps — food ~35% lower
+
+New Week 2 goal will target the shopping category; tracking starts Apr 15.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
