@@ -33,7 +33,7 @@ const VB_H = 160
 const PAD_L = 36
 const PAD_R = 24
 const PAD_T = 28
-const PAD_B = 28
+const PAD_B = 32
 const CHART_W = VB_W - PAD_L - PAD_R
 const CHART_H = VB_H - PAD_T - PAD_B
 
@@ -136,17 +136,10 @@ export default function ScoreTimeline({ history }: Props) {
                 {grade}
               </text>
 
-              {/* X-axis label */}
+              {/* X-axis date label */}
               <text x={p.x} y={VB_H - 4} textAnchor="middle" fontSize={9} fill="#6b7280">
-                W{p.week_number}
+                {new Date(p.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </text>
-
-              {/* Difficulty label below x-axis label (last point only, to avoid clutter) */}
-              {isLast && (
-                <text x={p.x} y={VB_H - 14} textAnchor="middle" fontSize={8} fill={color} fillOpacity={0.7}>
-                  {diff}
-                </text>
-              )}
             </g>
           )
         })}
