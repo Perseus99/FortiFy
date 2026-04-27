@@ -26,7 +26,7 @@ export default function DashboardPage() {
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
   const [showUpload, setShowUpload]   = useState(false)
   const [lastGoal, setLastGoal]       = useState<WeeklyGoal | null>(null)
-  const [scoreHistory, setScoreHistory] = useState<{ week_number: number; financial_score: number; created_at: string }[]>([])
+  const [scoreHistory, setScoreHistory] = useState<{ week_start_date: string; score: number; completed: boolean }[]>([])
 
   useEffect(() => {
     async function load() {
@@ -45,8 +45,8 @@ export default function DashboardPage() {
           .eq('user_id', user.id).eq('dismissed', true),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', true)
           .order('created_at', { ascending: false }).limit(1).single(),
-        supabase.from('wave_config').select('week_number, financial_score, created_at')
-          .eq('user_id', user.id).order('week_number', { ascending: true }),
+        supabase.from('weekly_goals').select('week_start_date, score, completed')
+          .eq('user_id', user.id).gt('score', 0).order('week_start_date', { ascending: true }),
       ])
 
       if (gs) setGameState(gs)
@@ -54,12 +54,15 @@ export default function DashboardPage() {
       if (txns) setTransactions(txns)
       if (lg) setLastGoal(lg)
       if (wc) {
-        const seen = new Map<number, typeof wc[0]>()
+        // Deduplicate by week_start_date — keep highest score per week
+        const seen = new Map<string, typeof wc[0]>()
         for (const row of wc) {
-          const existing = seen.get(row.week_number)
-          if (!existing || row.created_at > existing.created_at) seen.set(row.week_number, row)
+          const existing = seen.get(row.week_start_date)
+          if (!existing || row.score > existing.score) seen.set(row.week_start_date, row)
         }
-        setScoreHistory([...seen.values()].sort((a, b) => a.week_number - b.week_number))
+        setScoreHistory([...seen.values()].sort((a, b) =>
+          a.week_start_date.localeCompare(b.week_start_date)
+        ))
       }
       setSkipUsed((skipCount ?? 0) >= 1)
       setLoading(false)

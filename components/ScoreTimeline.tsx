@@ -1,11 +1,15 @@
 interface WeekPoint {
-  week_number: number
-  financial_score: number
-  created_at: string
+  week_start_date: string
+  score: number
+  completed: boolean
 }
 
 interface Props {
   history: WeekPoint[]
+}
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
 function scoreColor(s: number) {
@@ -50,7 +54,7 @@ export default function ScoreTimeline({ history }: Props) {
   if (history.length === 0) return null
 
   const n = history.length
-  const points = history.map((w, i) => ({ ...w, x: toX(i, n), y: toY(w.financial_score) }))
+  const points = history.map((w, i) => ({ ...w, x: toX(i, n), y: toY(w.score) }))
 
   // SVG polyline points string
   const linePts = points.map(p => `${p.x},${p.y}`).join(' ')
@@ -108,26 +112,27 @@ export default function ScoreTimeline({ history }: Props) {
 
         {/* Points */}
         {points.map((p, i) => {
-          const color = scoreColor(p.financial_score)
-          const grade = scoreGrade(p.financial_score)
-          const diff  = scoreDifficulty(p.financial_score)
+          const color = scoreColor(p.score)
+          const grade = scoreGrade(p.score)
+          const diff  = scoreDifficulty(p.score)
           const isLast = i === n - 1
 
           return (
-            <g key={p.week_number}>
-              {/* Outer ring on latest point */}
-              {isLast && (
+            <g key={p.week_start_date}>
+              {/* Outer ring on active (current) week */}
+              {!p.completed && (
                 <circle cx={p.x} cy={p.y} r={11} fill={color} fillOpacity={0.15} />
               )}
 
-              {/* Dot */}
-              <circle cx={p.x} cy={p.y} r={7} fill={color} />
-              <circle cx={p.x} cy={p.y} r={3} fill="white" fillOpacity={0.9} />
+              {/* Dot — dashed outline if in-progress */}
+              <circle cx={p.x} cy={p.y} r={7} fill={p.completed ? color : 'transparent'}
+                stroke={color} strokeWidth={p.completed ? 0 : 2} strokeDasharray={p.completed ? undefined : '3 2'} />
+              <circle cx={p.x} cy={p.y} r={3} fill={color} fillOpacity={0.9} />
 
               {/* Score label above dot */}
               <text x={p.x} y={p.y - 13} textAnchor="middle" fontSize={10}
                 fontWeight="bold" fill={color}>
-                {p.financial_score}
+                {p.score}
               </text>
 
               {/* Grade badge */}
@@ -136,9 +141,9 @@ export default function ScoreTimeline({ history }: Props) {
                 {grade}
               </text>
 
-              {/* X-axis date label */}
-              <text x={p.x} y={VB_H - 4} textAnchor="middle" fontSize={9} fill="#6b7280">
-                {new Date(p.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              {/* X-axis date label — week_start_date */}
+              <text x={p.x} y={VB_H - 4} textAnchor="middle" fontSize={9} fill={p.completed ? '#6b7280' : color} fillOpacity={p.completed ? 1 : 0.8}>
+                {fmtDate(p.week_start_date)}
               </text>
             </g>
           )
