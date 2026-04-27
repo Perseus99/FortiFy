@@ -53,7 +53,14 @@ export default function DashboardPage() {
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
       if (lg) setLastGoal(lg)
-      if (wc) setScoreHistory(wc)
+      if (wc) {
+        const seen = new Map<number, typeof wc[0]>()
+        for (const row of wc) {
+          const existing = seen.get(row.week_number)
+          if (!existing || row.created_at > existing.created_at) seen.set(row.week_number, row)
+        }
+        setScoreHistory([...seen.values()].sort((a, b) => a.week_number - b.week_number))
+      }
       setSkipUsed((skipCount ?? 0) >= 1)
       setLoading(false)
     }
