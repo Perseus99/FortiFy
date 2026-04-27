@@ -4,8 +4,9 @@ import { useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ParsedTxn, Period } from '@/lib/types'
 import { CAT_ICONS } from '@/lib/constants'
+import GoalPicker from './GoalPicker'
 
-type Step = 'picker' | 'parsing' | 'preview' | 'confirming' | 'done'
+type Step = 'picker' | 'parsing' | 'preview' | 'confirming' | 'done' | 'goal-picker'
 
 const PERIOD_CONFIG: Record<Period, { label: string; badge: string; desc: string; color: string }> = {
   week1:     { label: 'Week 1',       badge: 'W1',  desc: 'Full feature demo — goals, NPCs, game', color: 'border-amber-600 bg-amber-500/10 text-amber-400' },
@@ -28,7 +29,9 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
   const [totalIncome, setTotalIncome] = useState(0)
   const [error, setError]             = useState<string | null>(null)
   const [fileName, setFileName]       = useState<string | null>(null)
-  const [mergeStats, setMergeStats]   = useState<{ preExisting: number; inserted: number } | null>(null)
+  const [mergeStats, setMergeStats]         = useState<{ preExisting: number; inserted: number } | null>(null)
+  const [goalWeekStartDate, setGoalWeekStartDate] = useState<string>('')
+  const [goalWeekNumber, setGoalWeekNumber]       = useState<number>(1)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function getToken() {
@@ -84,8 +87,14 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
       if (!res.ok) { setError(data.error ?? 'Failed to apply statement'); setStep('preview'); return }
 
       setMergeStats({ preExisting: data.preExisting ?? 0, inserted: data.inserted ?? 0 })
-      setStep('done')
-      setTimeout(onComplete, 2500)
+      if (data.needsGoalSelection) {
+        setGoalWeekStartDate(data.trackingStart ?? '')
+        setGoalWeekNumber(data.weekNumber ?? 1)
+        setStep('goal-picker')
+      } else {
+        setStep('done')
+        setTimeout(onComplete, 2500)
+      }
     } catch (e: any) {
       setError(e.message)
       setStep('preview')
@@ -101,8 +110,12 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-800 flex justify-between items-center">
           <div>
-            <p className="text-white font-bold">Upload Bank Statement</p>
-            <p className="text-gray-500 text-xs mt-0.5">PDF → parse → apply to dashboard</p>
+            <p className="text-white font-bold">
+              {step === 'goal-picker' ? 'Choose Your Goal' : 'Upload Bank Statement'}
+            </p>
+            <p className="text-gray-500 text-xs mt-0.5">
+              {step === 'goal-picker' ? 'Set your weekly spending target' : 'PDF → parse → apply to dashboard'}
+            </p>
           </div>
           {step !== 'confirming' && step !== 'done' && (
             <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">×</button>
@@ -250,6 +263,26 @@ export default function StatementUpload({ userId, onClose, onComplete }: Props) 
               <p className="text-gray-300 text-sm font-medium animate-pulse">Applying statement...</p>
               <p className="text-gray-600 text-xs mt-1">Running financial analysis</p>
             </div>
+          )}
+
+          {/* Goal picker */}
+          {step === 'goal-picker' && (
+            <>
+              {mergeStats && (
+                <div className="bg-gray-800/60 rounded-lg px-3 py-2 border border-gray-700/50 text-xs text-gray-400">
+                  {mergeStats.inserted - mergeStats.preExisting > 0
+                    ? `${mergeStats.inserted - mergeStats.preExisting} new transactions imported`
+                    : `${mergeStats.inserted} transactions refreshed`}
+                  {mergeStats.preExisting > 0 && ` · ${mergeStats.preExisting} already on record`}
+                </div>
+              )}
+              <GoalPicker
+                userId={userId}
+                weekStartDate={goalWeekStartDate}
+                weekNumber={goalWeekNumber}
+                onGoalSet={() => { setStep('done'); setTimeout(onComplete, 2500) }}
+              />
+            </>
           )}
 
           {/* Done */}

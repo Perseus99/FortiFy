@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runAnalystAgent } from '@/agents/analyst'
 import { runGameEngineAgent } from '@/agents/gameEngine'
-import { runGoalAgent } from '@/agents/goalAgent'
-import { buildPlayerContext } from '@/agents/contextAgent'
 import { createAuthClient } from '@/lib/supabase'
 import { isoWeekStart, calculateScore } from '@/lib/utils'
 
@@ -45,7 +43,6 @@ export async function POST(req: NextRequest) {
     const weekNumber = gameState?.week_number ?? 1
     const nextWeek = calendarWeekTurned ? weekNumber + 1 : weekNumber
 
-    // All-time category totals (income excluded) — used by Goal Agent to pick riskiest category
     const { data: savedTxns } = await db
       .from('transactions')
       .select('category, amount, transaction_date')
@@ -56,8 +53,7 @@ export async function POST(req: NextRequest) {
         catTotals[t.category] = (catTotals[t.category] ?? 0) + Number(t.amount)
     })
 
-    // ── Goal completion ──────────────────────────────────────────────────────
-    // Only runs when a new calendar week starts — prevents repeat rewards on every sync
+    // ── Goal completion — only runs when calendar week turns ────────────────
     let goalPointsDelta = 0
     let goalHealthDelta = 0
     let goalAchieved = false
@@ -94,67 +90,43 @@ export async function POST(req: NextRequest) {
         .eq('user_id', userId)
         .eq('completed', false)
         .eq('week_start_date', goal.week_start_date)
-    }
 
-    const needsNewGoal = calendarWeekTurned || !goal?.goal_category
-
-    if (needsNewGoal) {
+      // Close any remaining stale incomplete goals
       await db.from('weekly_goals')
         .update({ completed: true })
         .eq('user_id', userId)
         .eq('completed', false)
-
-      const [{ data: prefs }, playerHistory] = await Promise.all([
-        db.from('category_preferences').select('category').eq('user_id', userId).eq('dismissed', true),
-        buildPlayerContext(userId, token),
-      ])
-      const excludedCategories = (prefs ?? []).map(p => p.category)
-
-      const goalResult = await runGoalAgent({
-        categories: catTotals,
-        flaggedTransactions: financialProfile.flagged_transactions.map(t => ({
-          merchant: t.merchant ?? 'Unknown',
-          amount: Number(t.amount),
-          flag_reason: t.flag_reason,
-        })),
-        totalSpent: financialProfile.total_spent,
-        totalIncome: financialProfile.total_income,
-        excludedCategories,
-        playerHistory,
-      })
-
-      await db.from('weekly_goals').insert({
-        user_id: userId,
-        week_start_date: weekStartStr,
-        goal_amount: goalResult.goal_amount,
-        goal_category: goalResult.goal_category,
-        goal_label: goalResult.goal_label,
-        actual_spent: catTotals[goalResult.goal_category] ?? 0,
-        score: 0,
-        completed: false,
-      })
     }
 
-    // Score for wave difficulty: category spend vs active goal
-    const activeGoalCategory = goal?.goal_category ?? ''
+    // After a week turn there is no active goal — user must pick a new one
+    const needsGoalSelection = calendarWeekTurned || !goal?.goal_category
+
+    // Wave score: use active goal if one exists, otherwise 50 (neutral difficulty)
+    const activeGoalCategory = needsGoalSelection ? '' : (goal?.goal_category ?? '')
     const activeCategorySpend = catTotals[activeGoalCategory] ?? 0
-    const waveScore = calculateScore(
-      activeCategorySpend, goal?.goal_amount ?? 3000,
-      financialProfile.total_spent, financialProfile.total_income,
-    )
+    const waveScore = needsGoalSelection
+      ? 50
+      : calculateScore(
+          activeCategorySpend, goal?.goal_amount ?? 3000,
+          financialProfile.total_spent, financialProfile.total_income,
+        )
 
     const waveConfig = await runGameEngineAgent(
       userId, waveScore, nextWeek, token,
       { points: goalPointsDelta, health: goalHealthDelta }
     )
 
-    // Keep active goal's score current
-    await db.from('weekly_goals')
-      .update({ score: waveScore })
-      .eq('user_id', userId)
-      .eq('completed', false)
+    // Keep active goal's score current (no-op when no active goal)
+    if (!needsGoalSelection) {
+      await db.from('weekly_goals')
+        .update({ score: waveScore })
+        .eq('user_id', userId)
+        .eq('completed', false)
+    }
 
-    return NextResponse.json({ financialProfile, waveConfig, goalAchieved, goalPointsDelta, goalHealthDelta })
+    return NextResponse.json({
+      financialProfile, waveConfig, goalAchieved, goalPointsDelta, goalHealthDelta, needsGoalSelection,
+    })
   } catch (err: any) {
     console.error('[weekly-loop]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

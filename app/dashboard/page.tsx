@@ -8,7 +8,13 @@ import type { NPCType } from '@/agents/npc'
 import NPCPopup from '@/components/npc/NPCPopup'
 import StatementUpload from '@/components/StatementUpload'
 import ScoreTimeline from '@/components/ScoreTimeline'
+import GoalPicker from '@/components/GoalPicker'
 import { CAT_ICONS } from '@/lib/constants'
+
+const WEEK_TRACKING_START: Record<number, string> = {
+  1: '2026-04-08',
+  2: '2026-04-15',
+}
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -24,8 +30,9 @@ export default function DashboardPage() {
   const [dismissing, setDismissing]   = useState(false)
   const [skipUsed, setSkipUsed]       = useState(false)
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
-  const [showUpload, setShowUpload]   = useState(false)
-  const [lastGoal, setLastGoal]       = useState<WeeklyGoal | null>(null)
+  const [showUpload, setShowUpload]       = useState(false)
+  const [showGoalPicker, setShowGoalPicker] = useState(false)
+  const [lastGoal, setLastGoal]           = useState<WeeklyGoal | null>(null)
   const [scoreHistory, setScoreHistory] = useState<{ week_start_date: string; score: number; completed: boolean }[]>([])
 
   useEffect(() => {
@@ -93,6 +100,8 @@ export default function DashboardPage() {
         setSyncMsg(`Goal achieved! +${data.goalPointsDelta} pts +${data.goalHealthDelta} HP. Reloading...`)
       } else if (data.goalHealthDelta < 0) {
         setSyncMsg(`Goal missed. ${data.goalHealthDelta} HP penalty. Reloading...`)
+      } else if (data.needsGoalSelection) {
+        setSyncMsg('New week! Choose your spending goal. Reloading...')
       } else {
         setSyncMsg('Sync complete! Reloading...')
       }
@@ -258,6 +267,36 @@ export default function DashboardPage() {
             >
               Upload Statement
             </button>
+          </div>
+        )}
+
+        {/* Choose-goal banner — transactions loaded but no active goal yet */}
+        {transactions.length > 0 && !goal && (
+          <div className="bg-amber-950/50 border border-amber-600 rounded-lg p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-amber-400 font-bold text-sm mb-1">🎯 Choose Your Goal</h2>
+                <p className="text-gray-400 text-xs">Pick a spending category to target this week.</p>
+              </div>
+              {!showGoalPicker && (
+                <button
+                  onClick={() => setShowGoalPicker(true)}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg text-sm whitespace-nowrap ml-4"
+                >
+                  Set Goal →
+                </button>
+              )}
+            </div>
+            {showGoalPicker && userId && gameState && (
+              <div className="mt-4 border-t border-amber-800/40 pt-4">
+                <GoalPicker
+                  userId={userId}
+                  weekStartDate={WEEK_TRACKING_START[gameState.week_number] ?? '2026-04-08'}
+                  weekNumber={gameState.week_number}
+                  onGoalSet={() => window.location.reload()}
+                />
+              </div>
+            )}
           </div>
         )}
 
