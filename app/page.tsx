@@ -1,89 +1,117 @@
-import Link from 'next/link'
+import LandingNav from '@/components/LandingNav'
+import HeroCTA from '@/components/HeroCTA'
+import LandingGuide from '@/components/LandingGuide'
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
+      <LandingNav />
 
       {/* Hero */}
-      <div className="flex flex-col items-center justify-center px-4 pt-24 pb-16 text-center">
-        <div className="text-6xl mb-6">🏰</div>
-        <h1 className="text-6xl font-bold text-amber-400 mb-3 tracking-tight">FortiFi</h1>
-        <p className="text-gray-300 text-xl mb-2">Your finances. Your fortress.</p>
-        <p className="text-gray-500 text-sm max-w-md mb-10">
+      <div className="flex flex-col items-center justify-center px-4 pt-36 pb-16 text-center">
+        <div className="text-7xl mb-6" style={{ filter: 'drop-shadow(0 0 28px rgba(245,158,11,0.55))' }}>
+          🏰
+        </div>
+        <h1 className="text-6xl font-bold mb-3 tracking-tight bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
+          FortiFi
+        </h1>
+        <p className="text-gray-200 text-xl mb-2 font-medium">Your finances. Your fortress.</p>
+        <p className="text-gray-500 text-sm max-w-md mb-7">
           A tower defense game where your weekly spending habits determine how hard the enemy waves hit.
           Save more. Defend better.
         </p>
-        <div className="flex gap-4 justify-center">
-          <Link href="/signup"
-            className="px-8 py-3 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg transition-colors text-lg">
-            Start Playing
-          </Link>
-          <Link href="/login"
-            className="px-8 py-3 border border-gray-700 hover:border-gray-500 text-gray-300 font-semibold rounded-lg transition-colors text-lg">
-            Log In
-          </Link>
+
+        {/* Score badge mock */}
+        <div className="flex items-center gap-2 bg-gray-900 border border-gray-800 rounded-full px-5 py-2 text-sm mb-10 flex-wrap justify-center">
+          <span className="text-gray-500">📊 Score</span>
+          <span className="font-mono font-bold text-green-400">78</span>
+          <span className="text-gray-700">→</span>
+          <span className="text-green-400 font-semibold">Easy Wave</span>
+          <span className="text-gray-700 mx-1">·</span>
+          <span className="text-gray-500">Score</span>
+          <span className="font-mono font-bold text-red-400">34</span>
+          <span className="text-gray-700">→</span>
+          <span className="text-red-400 font-semibold">Brutal Wave</span>
         </div>
+
+        <HeroCTA />
       </div>
 
-      {/* How it works */}
-      <div className="max-w-4xl mx-auto px-6 py-12 border-t border-gray-800">
+      {/* How It Works */}
+      <div id="how-it-works" className="max-w-4xl mx-auto px-6 py-12 border-t border-gray-800">
         <h2 className="text-center text-gray-400 text-xs uppercase tracking-widest mb-10">How It Works</h2>
-        <div className="grid grid-cols-3 gap-6 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           <div>
             <div className="text-4xl mb-3">📊</div>
-            <h3 className="text-white font-semibold mb-1">Upload Your Statement</h3>
+            <h3 className="text-white font-semibold mb-2">Upload Your Statement</h3>
             <p className="text-gray-500 text-sm">Upload a bank statement and Claude analyzes your transactions, scoring your financial discipline from 0–100.</p>
           </div>
           <div>
             <div className="text-4xl mb-3">⚔️</div>
-            <h3 className="text-white font-semibold mb-1">Defend Your City</h3>
+            <h3 className="text-white font-semibold mb-2">Defend Your City</h3>
             <p className="text-gray-500 text-sm">Your score sets the wave difficulty. Good week = easy wave. Bad week = 20 enemies at full speed.</p>
           </div>
           <div>
             <div className="text-4xl mb-3">💬</div>
-            <h3 className="text-white font-semibold mb-1">Get Coached</h3>
-            <p className="text-gray-500 text-sm">AI advisors call out your spending habits after every battle. No sugar-coating.</p>
+            <h3 className="text-white font-semibold mb-2">Get Coached</h3>
+            <p className="text-gray-500 text-sm">5 AI advisors call out your spending habits after every battle. They remember your history across weeks.</p>
           </div>
         </div>
       </div>
 
-      {/* Features */}
+      {/* Score → Wave Difficulty */}
       <div className="max-w-4xl mx-auto px-6 py-12 border-t border-gray-800">
-        <h2 className="text-center text-gray-400 text-xs uppercase tracking-widest mb-10">Features</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <p className="text-2xl mb-2">🏹 💣</p>
-            <h3 className="text-white font-semibold mb-1">2 Tower Types</h3>
-            <p className="text-gray-500 text-sm">Archer Tower for fast consistent hits. Cannon Tower for slow, heavy splash damage.</p>
+        <h2 className="text-center text-gray-400 text-xs uppercase tracking-widest mb-2">Score → Wave Difficulty</h2>
+        <p className="text-center text-gray-600 text-sm mb-10">Your financial score directly controls what attacks your fortress</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          <div className="bg-gray-900 rounded-xl p-5 border border-green-900 text-center">
+            <div className="text-3xl mb-3">🟢</div>
+            <div className="text-green-400 font-bold text-lg mb-1">Score 75+</div>
+            <div className="text-gray-500 text-sm mb-4">Good Week</div>
+            <div className="text-xs text-gray-500 space-y-1.5">
+              <div>≤ 8 enemies</div>
+              <div>Foodies + Subscription Creeps</div>
+              <div>Slow spawn rate</div>
+            </div>
+            <div className="mt-4 text-green-500 text-xs font-semibold tracking-wide">Easy — breathe</div>
           </div>
-          <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <p className="text-2xl mb-2">💸</p>
-            <h3 className="text-white font-semibold mb-1">Spending Enemies</h3>
-            <p className="text-gray-500 text-sm">Enemy waves scale with your financial score. Overspend and face a relentless horde.</p>
+
+          <div className="bg-gray-900 rounded-xl p-5 border border-amber-900 text-center">
+            <div className="text-3xl mb-3">🟡</div>
+            <div className="text-amber-400 font-bold text-lg mb-1">Score 45–74</div>
+            <div className="text-gray-500 text-sm mb-4">Average Week</div>
+            <div className="text-xs text-gray-500 space-y-1.5">
+              <div>9–14 enemies</div>
+              <div>+ Impulse Buyers + Night Owls</div>
+              <div>Faster spawns</div>
+            </div>
+            <div className="mt-4 text-amber-400 text-xs font-semibold tracking-wide">Medium — stay sharp</div>
           </div>
-          <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <p className="text-2xl mb-2">⚔️ 🔍 📐</p>
-            <h3 className="text-white font-semibold mb-1">5 AI Advisors</h3>
-            <p className="text-gray-500 text-sm">The Warden, Scout, Architect, Quartermaster, and Medic — each with their own persona and specialty. They remember your history across weeks.</p>
+
+          <div className="bg-gray-900 rounded-xl p-5 border border-red-900 text-center">
+            <div className="text-3xl mb-3">🔴</div>
+            <div className="text-red-400 font-bold text-lg mb-1">Score &lt; 45</div>
+            <div className="text-gray-500 text-sm mb-4">Rough Week</div>
+            <div className="text-xs text-gray-500 space-y-1.5">
+              <div>15+ enemies</div>
+              <div>+ Debt Collectors</div>
+              <div>Rapid spawns</div>
+            </div>
+            <div className="mt-4 text-red-400 text-xs font-semibold tracking-wide">Hard — brace for impact</div>
           </div>
-          <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <p className="text-2xl mb-2">📄</p>
-            <h3 className="text-white font-semibold mb-1">Statement Upload</h3>
-            <p className="text-gray-500 text-sm">Upload a bank statement PDF or use a demo sample. Claude parses it, categorizes every transaction, and sets your wave difficulty.</p>
-          </div>
+
         </div>
       </div>
 
-      {/* Footer CTA */}
+      {/* Guide */}
+      <LandingGuide />
+
+      {/* CTA */}
       <div className="text-center px-4 py-16 border-t border-gray-800">
         <p className="text-gray-400 mb-6 text-lg">Ready to defend your finances?</p>
-        <Link href="/signup"
-          className="px-10 py-4 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-lg transition-colors text-lg">
-          Build Your Fortress →
-        </Link>
-        <p className="text-gray-600 text-xs mt-8">Powered by Claude AI · Supabase</p>
+        <HeroCTA />
       </div>
-
     </main>
   )
 }
