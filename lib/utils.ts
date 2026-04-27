@@ -19,11 +19,6 @@ export function isoWeekStart(date: Date): string {
   return d.toISOString().split('T')[0]
 }
 
-export function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00Z')
-  d.setUTCDate(d.getUTCDate() + days)
-  return d.toISOString().split('T')[0]
-}
 
 export function weeksAgoMonday(n: number): string {
   const d = new Date()
