@@ -25,10 +25,8 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading]     = useState(true)
   const [activeNPC, setActiveNPC] = useState<NPCType | null>(null)
-  const [syncing, setSyncing]         = useState(false)
-  const [syncMsg, setSyncMsg]         = useState('')
-  const [dismissing, setDismissing]   = useState(false)
-  const [skipUsed, setSkipUsed]       = useState(false)
+  const [syncing, setSyncing]   = useState(false)
+  const [syncMsg, setSyncMsg]   = useState('')
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
   const [showUpload, setShowUpload]       = useState(false)
   const [showGoalPicker, setShowGoalPicker] = useState(false)
@@ -42,14 +40,12 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: gs }, { data: wg }, { data: txns }, { count: skipCount }, { data: lg }, { data: wc }] = await Promise.all([
+      const [{ data: gs }, { data: wg }, { data: txns }, { data: lg }, { data: wc }] = await Promise.all([
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
         supabase.from('transactions').select('*').eq('user_id', user.id)
           .order('transaction_date', { ascending: false }).limit(100),
-        supabase.from('category_preferences').select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id).eq('dismissed', true),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', true)
           .order('created_at', { ascending: false }).limit(1).single(),
         supabase.from('weekly_goals').select('week_start_date, score, completed')
@@ -71,7 +67,6 @@ export default function DashboardPage() {
           a.week_start_date.localeCompare(b.week_start_date)
         ))
       }
-      setSkipUsed((skipCount ?? 0) >= 1)
       setLoading(false)
     }
     load()
@@ -111,24 +106,6 @@ export default function DashboardPage() {
       setSyncMsg(`Sync failed: ${err.error}`)
     }
     setSyncing(false)
-  }
-
-  async function handleDismissGoal() {
-    if (!userId || !goal?.goal_category) return
-    setDismissing(true)
-    const token = await getToken()
-    if (!token) { setDismissing(false); return }
-    const res = await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ userId, category: goal.goal_category, reason: 'User marked as intentional' }),
-    })
-    if (res.ok) {
-      const { goal: newGoal } = await res.json()
-      setGoal(newGoal)
-      setSkipUsed(true)
-    }
-    setDismissing(false)
   }
 
   async function handleReset() {
@@ -502,24 +479,6 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Dismiss — one skip per week */}
-            {!skipUsed && goal.goal_category && (
-              <div className="pt-1 border-t border-gray-800 flex items-center justify-between">
-                <p className="text-gray-500 text-xs">This spend is intentional?</p>
-                <button
-                  onClick={handleDismissGoal}
-                  disabled={dismissing}
-                  className="text-xs text-gray-400 hover:text-amber-400 disabled:opacity-40 transition-colors underline underline-offset-2"
-                >
-                  {dismissing ? 'Recalculating...' : `Skip ${
-                    { food: 'Food', subscriptions: 'Subscriptions', shopping: 'Shopping',
-                      transport: 'Transport', entertainment: 'Entertainment',
-                      utilities: 'Utilities', other: 'Other spending' }[goal.goal_category]
-                    ?? goal.goal_category
-                  } → find another goal`}
-                </button>
-              </div>
-            )}
           </div>
         )}
 
