@@ -1,43 +1,58 @@
-FORTIFY BANK — ACCOUNT STATEMENT
+O'GIRL BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
 Statement Period: Apr 8 – Apr 14, 2026
+Account Holder: Demo User
 
 ================================================================
 TRANSACTIONS
 ================================================================
 
-Date        Merchant                        Category          Amount
+Date        Merchant                              Amount
 ------------------------------------------------------------------------
-2026-04-08  Corner Café                     Food                 $4.50
-2026-04-08  Trader Joe's                    Food                $42.00
-2026-04-09  Corner Café                     Food                 $4.50
-2026-04-09  Lyft                            Transport           $11.00
-2026-04-10  Corner Café                     Food                 $4.50
-2026-04-10  CVS Pharmacy                    Shopping            $18.00
-2026-04-11  Direct Deposit — Paycheck       Income            $2,800.00
-2026-04-11  Trader Joe's                    Food                $38.00
-2026-04-12  Corner Café                     Food                 $4.50
-2026-04-12  Verizon Phone Bill              Utilities           $85.00
-2026-04-13  Corner Café                     Food                 $4.50
-2026-04-13  Cinema Tickets                  Entertainment       $16.00
-2026-04-14  Corner Café                     Food                 $4.50
-2026-04-14  Target Store                    Shopping            $45.00
+2026-04-08  Corner Café                               $4.50
+2026-04-08  Trader Joe's                             $63.50
+2026-04-09  Corner Café                               $4.50
+2026-04-09  Lyft                                     $11.00
+2026-04-10  Corner Café                               $4.50
+2026-04-10  Chipotle Mexican Grill                   $21.50
+2026-04-10  Amazon.com — USB-C Charger               $12.99
+2026-04-11  Direct Deposit — Payroll              $2,800.00
+2026-04-11  Trader Joe's                             $71.00
+2026-04-11  GOOGLE*SVCS 650-253-0000                 $19.99
+2026-04-12  Corner Café                               $4.50
+2026-04-12  Verizon Wireless                         $85.00
+2026-04-12  Xfinity Internet                         $79.99
+2026-04-13  Corner Café                               $4.50
+2026-04-13  Nike.com                                $137.50
+2026-04-13  H&M Online Store                         $89.99
+2026-04-13  Lyft                                     $18.50
+2026-04-14  Corner Café                               $4.50
+2026-04-14  ZARA.com                                 $74.99
+2026-04-14  Whole Foods Market                       $52.00
+2026-04-14  Regal Cinemas                            $19.00
 
 ================================================================
 SUMMARY
 ================================================================
-Total Income:       $2,800.00
-Total Spend:          $282.50
-Net:               +$2,517.50
+Total Income:        $2,800.00
+Total Spend:           $784.45
+Net:                +$2,015.55
 
 ================================================================
 NOTES FOR DEMO
 ================================================================
 - Upload using the "Week 2" period option
-- Apr 8–10: SAME as Week 1.5 (overlap — will show "already on record")
-- Apr 11–14: NEW — continued improvement pattern
-- Week 1 goal is CLOSED with final Apr 8–14 result (pass or fail)
-- New Week 2 goal is set; progress bar resets to 0%
+- Apr 8–10: same as Mid-Week upload (overlap — shows "already on record")
+- Apr 11–14: NEW data
+- Week 1 food goal is CLOSED with final Apr 8–14 result
+- New Week 2 goal is set for the next period (tracking starts Apr 15)
 - Game carries over Week 1 best points/HP as starting values
-- No Starbucks, no Uber Eats, no subscription stack
+
+What the NPCs should notice:
+  · Scout: GOOGLE*SVCS is unrecognized — possible hidden subscription
+  · Quartermaster: Shopping total $315 (Nike + H&M + ZARA) in 2 days
+  · Architect: Savings rate improved vs Week 1 ($784 spend vs $893)
+  · Warden: Shopping splurge offsets food improvement
+  · Food improvement: Corner Café daily ($4.50) vs Starbucks ($6.50),
+    groceries vs delivery — food spend down ~40% from Week 1
 ================================================================

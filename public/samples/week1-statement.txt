@@ -1,41 +1,59 @@
-FORTIFY BANK — ACCOUNT STATEMENT
+O'GIRL BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
 Statement Period: Apr 1 – Apr 7, 2026
+Account Holder: Demo User
 
 ================================================================
 TRANSACTIONS
 ================================================================
 
-Date        Merchant                        Category          Amount
+Date        Merchant                              Amount
 ------------------------------------------------------------------------
-2026-04-01  Direct Deposit — Paycheck       Income            $2,800.00
-2026-04-01  Netflix                         Subscriptions       $15.49
-2026-04-01  Adobe Creative Cloud            Subscriptions       $54.99
-2026-04-01  Starbucks Coffee                Food                 $6.50
-2026-04-02  Shell Gas Station               Transport           $45.00
-2026-04-02  Local Grill & Bistro            Food                $67.50
-2026-04-03  Amazon Marketplace              Shopping            $78.99
-2026-04-03  Spotify                         Subscriptions        $9.99
-2026-04-04  Uber Eats                       Food                $34.99
-2026-04-04  Starbucks Coffee                Food                 $6.50
-2026-04-05  Target Store                    Shopping            $67.00
-2026-04-05  Chipotle Restaurant             Food                $38.50
-2026-04-06  Cinema Tickets                  Entertainment       $18.00
-2026-04-07  Starbucks Coffee                Food                 $6.50
+2026-04-01  Direct Deposit — Payroll              $2,800.00
+2026-04-01  Netflix                                  $15.49
+2026-04-01  Adobe Creative Cloud                     $54.99
+2026-04-01  Starbucks #3847                           $6.50
+2026-04-01  Starbucks #3847                           $6.50
+2026-04-02  Shell Gas Station                        $52.00
+2026-04-02  The Local Grille                         $82.50
+2026-04-02  Target Store #0482                       $67.80
+2026-04-03  Spotify Premium                           $9.99
+2026-04-03  Planet Fitness                           $24.99
+2026-04-03  Uber Eats — McDonald's                   $18.99
+2026-04-03  Starbucks #3847                           $6.50
+2026-04-03  Verizon Wireless                         $85.00
+2026-04-04  Chipotle Mexican Grill                   $38.50
+2026-04-04  Starbucks #3847                           $6.50
+2026-04-04  CVS Pharmacy                             $28.50
+2026-04-04  Planet Fitness                           $24.99
+2026-04-05  DoorDash — Panda Express                 $24.50
+2026-04-05  Amazon.com — Bluetooth Speaker           $89.99
+2026-04-05  AMC Theaters                             $22.00
+2026-04-05  Starbucks #3847                           $6.50
+2026-04-06  Shell Gas Station                        $44.50
+2026-04-06  AMZN*4X2K9LM1                            $23.99
+2026-04-06  Sidebar Lounge & Bar                     $48.00
+2026-04-06  Postmates — Late Night Tacos             $31.99
+2026-04-07  Hulu                                     $17.99
+2026-04-07  Starbucks #3847                           $6.50
+2026-04-07  Walgreens                                $18.40
+2026-04-07  Lyft                                     $14.50
 
 ================================================================
 SUMMARY
 ================================================================
-Total Income:       $2,800.00
-Total Spend:          $450.45
-Net:               +$2,349.55
+Total Income:        $2,800.00
+Total Spend:           $893.59
+Net:                +$1,906.41
 
 ================================================================
 NOTES FOR DEMO
 ================================================================
 - Upload using the "Week 1" period option
-- High food spend (Starbucks daily, Uber Eats, two restaurants)
-- Subscription stack on Apr 1 ($80.47 combined)
-- Goal will be set as a FORWARD-LOOKING challenge from Apr 8 onward
-- Progress bar shows 0% — tracking starts Apr 8
+- Starbucks appears TWICE on Apr 1 (potential duplicate charge)
+- Planet Fitness appears TWICE (Apr 3 + Apr 4) — likely an error
+- AMZN*4X2K9LM1 is an unrecognized Amazon charge
+- Heavy delivery spend: Uber Eats + DoorDash + Postmates across 3 days
+- Sidebar Lounge $48 bar tab on a weeknight
+- Goal will be FORWARD-LOOKING from Apr 8 — progress bar starts at 0%
 ================================================================

@@ -1,39 +1,53 @@
-FORTIFY BANK — ACCOUNT STATEMENT
+O'GIRL BANK — ACCOUNT STATEMENT
 Account: Checking ••••4821
 Statement Period: Apr 4 – Apr 10, 2026
+Account Holder: Demo User
 
 ================================================================
 TRANSACTIONS
 ================================================================
 
-Date        Merchant                        Category          Amount
+Date        Merchant                              Amount
 ------------------------------------------------------------------------
-2026-04-04  Uber Eats                       Food                $34.99
-2026-04-04  Starbucks Coffee                Food                 $6.50
-2026-04-05  Target Store                    Shopping            $67.00
-2026-04-05  Chipotle Restaurant             Food                $38.50
-2026-04-06  Cinema Tickets                  Entertainment       $18.00
-2026-04-07  Starbucks Coffee                Food                 $6.50
-2026-04-08  Corner Café                     Food                 $4.50
-2026-04-08  Trader Joe's                    Food                $42.00
-2026-04-09  Corner Café                     Food                 $4.50
-2026-04-09  Lyft                            Transport           $11.00
-2026-04-10  Corner Café                     Food                 $4.50
-2026-04-10  CVS Pharmacy                    Shopping            $18.00
+2026-04-04  Chipotle Mexican Grill                   $38.50
+2026-04-04  Starbucks #3847                           $6.50
+2026-04-04  CVS Pharmacy                             $28.50
+2026-04-04  Planet Fitness                           $24.99
+2026-04-05  DoorDash — Panda Express                 $24.50
+2026-04-05  Amazon.com — Bluetooth Speaker           $89.99
+2026-04-05  AMC Theaters                             $22.00
+2026-04-05  Starbucks #3847                           $6.50
+2026-04-06  Shell Gas Station                        $44.50
+2026-04-06  AMZN*4X2K9LM1                            $23.99
+2026-04-06  Sidebar Lounge & Bar                     $48.00
+2026-04-06  Postmates — Late Night Tacos             $31.99
+2026-04-07  Hulu                                     $17.99
+2026-04-07  Starbucks #3847                           $6.50
+2026-04-07  Walgreens                                $18.40
+2026-04-07  Lyft                                     $14.50
+2026-04-08  Corner Café                               $4.50
+2026-04-08  Trader Joe's                             $63.50
+2026-04-09  Corner Café                               $4.50
+2026-04-09  Lyft                                     $11.00
+2026-04-10  Corner Café                               $4.50
+2026-04-10  Chipotle Mexican Grill                   $21.50
+2026-04-10  Amazon.com — USB-C Charger               $12.99
 
 ================================================================
 SUMMARY
 ================================================================
-Total Income:       $0.00
-Total Spend:          $256.49
+Total Income:            $0.00
+Total Spend:           $570.34
 
 ================================================================
 NOTES FOR DEMO
 ================================================================
 - Upload using the "Mid-Week" period option
-- Apr 4–7: SAME transactions as Week 1 for those dates (overlap)
-  → these will show as "already on record" in the merge stats
-- Apr 8–10: NEW transactions — spending habits improving
-  (Corner Café instead of Starbucks, groceries instead of delivery)
-- Goal progress bar updates to show Apr 8–10 food spend only
+- Apr 4–7: same transactions as Week 1 for those dates (overlap)
+  → these show as "already on record" in the merge stats
+- Apr 8–10: NEW — habits improving
+    · Corner Café ($4.50) replaces daily Starbucks ($6.50)
+    · Trader Joe's grocery run instead of delivery apps
+    · Smaller Chipotle order ($21.50 vs $38.50)
+- Goal progress bar updates to show Apr 8–10 food spend: ~$34
 ================================================================
