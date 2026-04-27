@@ -7,6 +7,7 @@ import type { GameState, WeeklyGoal, Transaction } from '@/lib/types'
 import type { NPCType } from '@/agents/npc'
 import NPCPopup from '@/components/npc/NPCPopup'
 import StatementUpload from '@/components/StatementUpload'
+import ScoreTimeline from '@/components/ScoreTimeline'
 import { CAT_ICONS } from '@/lib/constants'
 
 export default function DashboardPage() {
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [npcMessages, setNpcMessages] = useState<Record<string, import('@/agents/npc').NPCMessage[]>>({})
   const [showUpload, setShowUpload]   = useState(false)
   const [lastGoal, setLastGoal]       = useState<WeeklyGoal | null>(null)
+  const [scoreHistory, setScoreHistory] = useState<{ week_number: number; financial_score: number; created_at: string }[]>([])
 
   useEffect(() => {
     async function load() {
@@ -33,7 +35,7 @@ export default function DashboardPage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const [{ data: gs }, { data: wg }, { data: txns }, { count: skipCount }, { data: lg }] = await Promise.all([
+      const [{ data: gs }, { data: wg }, { data: txns }, { count: skipCount }, { data: lg }, { data: wc }] = await Promise.all([
         supabase.from('game_state').select('*').eq('user_id', user.id).single(),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', false)
           .order('created_at', { ascending: false }).limit(1).single(),
@@ -43,12 +45,15 @@ export default function DashboardPage() {
           .eq('user_id', user.id).eq('dismissed', true),
         supabase.from('weekly_goals').select('*').eq('user_id', user.id).eq('completed', true)
           .order('created_at', { ascending: false }).limit(1).single(),
+        supabase.from('wave_config').select('week_number, financial_score, created_at')
+          .eq('user_id', user.id).order('week_number', { ascending: true }),
       ])
 
       if (gs) setGameState(gs)
       if (wg) setGoal(wg)
       if (txns) setTransactions(txns)
       if (lg) setLastGoal(lg)
+      if (wc) setScoreHistory(wc)
       setSkipUsed((skipCount ?? 0) >= 1)
       setLoading(false)
     }
@@ -252,6 +257,9 @@ export default function DashboardPage() {
             {syncMsg}
           </div>
         )}
+
+        {/* Score timeline */}
+        {scoreHistory.length > 0 && <ScoreTimeline history={scoreHistory} />}
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-4">
