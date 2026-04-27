@@ -161,6 +161,7 @@ export default function DashboardPage() {
   const overBudget = goal ? categorySpend > goal.goal_amount : false
   const hasSubscriptions = transactions.some(t => t.category === 'subscriptions')
   const hasFlagged     = transactions.some(t => t.flagged)
+  const flaggedCount   = transactions.filter(t => t.flagged).length
 
   // Midweek projection
   const weekStart    = goal?.week_start_date ? new Date(goal.week_start_date) : null
@@ -380,13 +381,19 @@ export default function DashboardPage() {
                   : 'bg-gray-900 border-gray-800 hover:border-teal-800'
               }`}
             >
-              {hasFlagged && (
-                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-teal-400 rounded-full animate-pulse" />
+              {flaggedCount > 0 && (
+                <span className="absolute top-3 right-3 min-w-[20px] h-5 bg-teal-500 text-black text-xs font-bold rounded-full flex items-center justify-center px-1 animate-pulse">
+                  {flaggedCount}
+                </span>
               )}
               <p className="text-2xl mb-1">🔍</p>
               <p className="text-white font-semibold">The Scout</p>
               <p className="text-gray-400 text-xs mt-0.5">Spending Investigator</p>
-              {hasFlagged && <p className="text-teal-400 text-xs mt-2 font-medium">🔍 Suspicious transactions found</p>}
+              {hasFlagged && (
+                <p className="text-teal-400 text-xs mt-2 font-medium">
+                  {flaggedCount} suspicious transaction{flaggedCount !== 1 ? 's' : ''} flagged
+                </p>
+              )}
             </button>
 
             <button

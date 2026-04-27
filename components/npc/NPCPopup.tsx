@@ -201,8 +201,13 @@ export default function NPCPopup({ npcType, userId, onClose, gameResult, initial
           ))}
           {loading && initialized && (
             <div className="flex justify-start">
-              <div className={`${config.bubbleBg} border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-400`}>
-                <span className="animate-pulse">{config.icon} ...</span>
+              <div className={`${config.bubbleBg} border border-gray-700 rounded-lg px-3 py-3`}>
+                <span className={`text-xs font-semibold block mb-2 opacity-60 ${config.headerText}`}>{config.name}</span>
+                <div className="flex gap-1.5 items-center">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-300ms]" />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-150ms]" />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                </div>
               </div>
             </div>
           )}
