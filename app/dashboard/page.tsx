@@ -227,7 +227,7 @@ export default function DashboardPage() {
           })() : (
             <div className="rounded-lg px-4 py-3 border border-gray-800 bg-gray-900/50 flex items-center gap-3 text-sm">
               <span className="text-lg">🏁</span>
-              <span className="text-gray-500">No goals yet — upload a statement to get started</span>
+              <span className="text-gray-500">Select your first goal to get started</span>
             </div>
           )
         )}
