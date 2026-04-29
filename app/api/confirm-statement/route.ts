@@ -120,24 +120,6 @@ export async function POST(req: NextRequest) {
       // Belt-and-suspenders: clear any remaining incomplete goals
       await db.from('weekly_goals').delete().eq('user_id', userId).eq('completed', false)
 
-      // Seed a placeholder so NPCs have context on first run
-      const { count: histCount } = await db.from('weekly_goals')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId).eq('completed', true)
-
-      if (!histCount || histCount === 0) {
-        await db.from('weekly_goals').insert({
-          user_id:         userId,
-          week_start_date: '2026-04-08',
-          goal_amount:     350,
-          goal_category:   'food',
-          goal_label:      'Keep food spend under $350 — Week 1 baseline',
-          actual_spent:    287,
-          score:           65,
-          completed:       true,
-        })
-      }
-
       // Reset game state, carrying forward last week's best result
       await db.from('game_state').upsert({
         user_id:           userId,
